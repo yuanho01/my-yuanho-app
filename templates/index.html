@@ -1,25 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}陳建安 - 技術服務與線上賣場{% endblock %}
 {% block content %}
-<!-- 💡 雲端主機喚醒中的載入提示遮罩 (針對 Render 免費主機休眠設計) -->
-<div id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #ffffff; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: sans-serif; transition: opacity 0.5s ease;">
-    <div style="font-size: 22px; font-weight: bold; color: #0d6efd; margin-bottom: 12px;">雲嘉南二手電腦</div>
-    <div style="font-size: 16px; color: #555555;">主機正在連線啟動中，請稍候...</div>
-</div>
-
-<script>
-    // 💡 當網頁完全載入後，自動隱藏提示畫面
-    window.addEventListener('load', function() {
-        var loader = document.getElementById('loading-overlay');
-        if (loader) {
-            loader.style.opacity = '0';
-            setTimeout(function() {
-                loader.style.display = 'none';
-            }, 500); // 0.5秒淡出特效
-        }
-    });
-</script>
-
 <div class="jumbotron bg-primary text-white rounded p-4 mb-4 text-center">
     <h1 class="display-5 font-weight-bold">陳建安個人技術服務工作室</h1>
     <p class="lead">專業,誠信,在地實惠到府服務（RO淨水器、監視器、電腦維修）</p>
@@ -190,7 +171,9 @@
                                     <div class="alert alert-warning py-1 px-2 small mb-2 text-center">
                                         🚚 管理員已出貨，請收到商品後點擊確認！
                                     </div>
-                                    <form action="{{ url_for('user_complete_order', order_id=order.order_id) }}" method="POST">
+                                    <!-- 會員點擊「我已收到貨」按鈕 -->
+                                    <!-- 修改後 (正確) -->
+                                        <form action="{{ url_for('user_complete_order', order_id=order.order_id) }}" method="POST">
                                         <button type="submit" class="btn btn-success btn-sm w-100" onclick="return confirm('確定已經收到貨了嗎？確認後訂單將完成並移至歷史紀錄。');">
                                             📦 我已收到貨
                                         </button>
