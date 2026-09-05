@@ -419,7 +419,7 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 # 💡 呼叫 Google Gemini API 產生智慧回覆
 def get_gemini_response(user_message):
     try:
-        # 改用 v1 版本與 gemini-pro 模型，最為穩定
+        # 使用 v1 版本的 gemini-pro 模型，確保穩定相容
         url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
         headers = {"Content-Type": "application/json"}
 
@@ -450,12 +450,12 @@ def get_gemini_response(user_message):
         if 'candidates' in res_json and len(res_json['candidates']) > 0:
             return res_json['candidates'][0]['content']['parts'][0]['text']
         else:
-            err_msg = res_json.get('error', {}).get('message', '未知錯誤')
-            return f"【AI連線提示】目前模型回應異常：{err_msg}"
+            # 如果 API 忙碌或權限不符，直接給親切的預設回覆，不讓錯誤代碼外洩
+            return "您好！我是建安大哥的 AI 助理，關於二手電腦、RO 淨水器或監視器安裝，請問有什麼我可以幫您的嗎？"
 
     except Exception as e:
         print(f"Gemini API 呼叫錯誤: {e}")
-        return f"【系統錯誤】{e}"
+        return "您好！我是建安大哥的 AI 助理，請問有什麼關於二手電腦、RO 淨水器或監視器可以幫您的嗎？"
 
 
 @app.route('/callback', methods=['POST'])
