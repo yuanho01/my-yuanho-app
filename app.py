@@ -182,7 +182,7 @@ def checkout():
 
         # 💡 如果您之後找到自己的 LINE User ID (以 U 開頭)，可以把下方雙引號內的字串換掉；
         # 目前先設定為自動發送或留空防呆，不影響訂單成立與後台運作。
-        user_id = ""
+        user_id = "Udf5ee6924620bc596fe3a3273adbc5ea"
 
         if user_id:
             url = "https://api.line.me/v2/bot/message/push"
