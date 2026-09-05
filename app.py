@@ -407,10 +407,19 @@ def delete_service(item_id):
     return redirect(url_for('admin'))
 
 
+import os
+import requests
+from flask import Flask, request
+
+app = Flask(__name__)
+
+# 從 Render 環境變數讀取金鑰
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+
+
 # 💡 呼叫 Google Gemini API 產生智慧回覆
 def get_gemini_response(user_message):
     try:
-        # 將模型名稱改為 gemini-1.5-flash 或 gemini-pro，確保 v1beta 抓得到
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
         headers = {"Content-Type": "application/json"}
 
@@ -438,14 +447,51 @@ def get_gemini_response(user_message):
         res_json = response.json()
         print("Gemini 回應 JSON:", res_json)
 
-        # 正常抓取 AI 回答
         if 'candidates' in res_json and len(res_json['candidates']) > 0:
             return res_json['candidates'][0]['content']['parts'][0]['text']
         else:
-            # 如果還是有誤，把錯誤訊息印出來當作回覆
             err_msg = res_json.get('error', {}).get('message', '未知錯誤')
             return f"【AI連線提示】目前模型回應異常：{err_msg}"
 
     except Exception as e:
         print(f"Gemini API 呼叫錯誤: {e}")
         return f"【系統錯誤】{e}"
+
+
+@app.route('/callback', methods=['POST'])
+def callback():
+    body = request.get_json()
+    print("====== LINE Webhook 收到資料 ======", body)
+
+    try:
+        line_token = "DaL1aZe9xmFwD5cn7lpswPIpwGFyh8F1rG0VYn8GbBHuOdWTKWTpPOa8umgmy97dF6aVxm/DIpwGp5KQ9wEBsVO9tTrgKqSPeKYM+wXx/qO0iBJ/WagNnrjiLq16n76AXjFiQlSrHmnQDa5SOEjufQdB04t89/1O/w1cDnyilFU="
+
+        for event in body.get('events', []):
+            if event.get('type') == 'message' and event.get('message', {}).get('type') == 'text':
+                user_text = event['message']['text'].strip()
+                reply_token = event['replyToken']
+                print(f"收到使用者訊息: {user_text}")
+
+                reply_text = get_gemini_response(user_text)
+                print(f"Gemini 回應內容: {reply_text}")
+
+                url = "https://api.line.me/v2/bot/message/reply"
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {line_token}"
+                }
+                payload = {
+                    "replyToken": reply_token,
+                    "messages": [{"type": "text", "text": reply_text}]
+                }
+                res = requests.post(url, headers=headers, json=payload)
+                print("LINE 回覆 API 狀態碼:", res.status_code)
+                print("LINE 回覆 API 回應內容:", res.text)
+    except Exception as e:
+        print(f"處理 LINE 自動回覆錯誤: {e}")
+
+    return 'OK', 200
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
