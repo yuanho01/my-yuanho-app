@@ -103,7 +103,7 @@ def index():
     logged_in_user = session.get('logged_in_user', '')
     discount_total = int(subtotal * 0.9) if is_logged_in else subtotal
 
-    all_user_orders = [o for o in data.get('orders', []) if o.get('username') == logged_in_user] if is_logged_in else []
+    all_user_orders = [o for o in data.get('orders', []) if o.get('username') == logged_in_user] if is_logged_in else[]
     user_orders = [o for o in all_user_orders if o.get('status', 'active') in ['active', 'processing', 'shipped']]
     user_history_orders = [o for o in all_user_orders if o.get('status') == 'completed']
 
@@ -440,8 +440,23 @@ def get_gemini_response(user_message):
         print(f"Gemini API 呼叫錯誤: {e}")
         return "您好！目前訊息較多，我們將盡快由專人為您回覆！"
 
+@app.route('/callback', methods=['POST'])
+def callback():
+    body = request.get_json()
+    print("====== LINE Webhook 收到資料 ======", body)
 
-# 呼叫 LINE Reply API 回覆訊息
+    try:
+        line_token = "DaL1aZe9xmFwD5cn7lpswPIpwGFyh8F1rG0VYn8GbBHuOdWTKWTpPOa8umgmy97dF6aVxm/DIpwGp5KQ9wEBsVO9tTrgKqSPeKYM+wXx/qO0iBJ/WagNnrjiLq16n76AXjFiQlSrHmnQDa5SOEjufQdB04t89/1O/w1cDnyilFU="
+
+        for event in body.get('events', []):
+            if event.get('type') == 'message' and event.get('message', {}).get('type') == 'text':
+                user_text = event['message']['text'].strip()
+                reply_token = event['replyToken']
+
+                # 透過 Google Gemini AI 產生智慧回應
+                reply_text = get_gemini_response(user_text)
+
+                # 呼叫 LINE Reply API 回覆訊息
                 url = "https://api.line.me/v2/bot/message/reply"
                 headers = {
                     "Content-Type": "application/json",
@@ -454,6 +469,11 @@ def get_gemini_response(user_message):
                 res = requests.post(url, headers=headers, json=payload)
                 print("LINE 回覆 API 狀態碼:", res.status_code)
                 print("LINE 回覆 API 回應內容:", res.text)
+
+    except Exception as e:
+        print(f"處理 LINE 自動回覆錯誤: {e}")
+
+    return 'OK', 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
