@@ -408,55 +408,10 @@ def delete_service(item_id):
 
 
 import os
-import requests
 from flask import Flask, request
+import requests
 
 app = Flask(__name__)
-
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
-
-# 💡 呼叫 Google Gemini API 產生智慧回覆
-def get_gemini_response(user_message):
-    try:
-        # 使用 v1 版本的 gemini-pro 模型，確保穩定相容
-        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
-        headers = {"Content-Type": "application/json"}
-
-        system_prompt = (
-            "【系統角色與規範】\n"
-            "你是一個專業、親切且有禮貌的在地店家客服助理，店家老闆是建安大哥。 \n"
-            "我們的業務範圍與服務項目如下：\n"
-            "1. 服務地區嚴格限定在：【雲林、嘉義、台南】地區。如果客戶詢問其他縣市，請客氣告知目前未提供該地區服務。\n"
-            "2. 我們提供到府維修、安裝與服務，出發點是【台南新營】。\n"
-            "3. 車馬費計算規則（依距離遠近從新營出發）：例如下營約 200 元、水上約 400 元，較遠或鄰近地區請根據新營出發的距離合理估算車馬費，並主動詢問客戶是否能接受。\n"
-            "4. 核心產品與服務：二手電腦、RO 淨水器、監視器安裝與各項到府技術服務。\n"
-            "5. 請用繁體中文回覆，語氣要親切、像真人老闆或店長在跟客人對話一樣。\n\n"
-        )
-
-        payload = {
-            "contents": [
-                {
-                    "role": "user",
-                    "parts": [{"text": system_prompt + "客戶詢問：" + user_message}]
-                }
-            ]
-        }
-
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
-        res_json = response.json()
-        print("Gemini 回應 JSON:", res_json)
-
-        if 'candidates' in res_json and len(res_json['candidates']) > 0:
-            return res_json['candidates'][0]['content']['parts'][0]['text']
-        else:
-            # 如果 API 忙碌或權限不符，直接給親切的預設回覆，不讓錯誤代碼外洩
-            return "您好！我是建安大哥的 AI 助理，關於二手電腦、RO 淨水器或監視器安裝，請問有什麼我可以幫您的嗎？"
-
-    except Exception as e:
-        print(f"Gemini API 呼叫錯誤: {e}")
-        return "您好！我是建安大哥的 AI 助理，請問有什麼關於二手電腦、RO 淨水器或監視器可以幫您的嗎？"
-
 
 @app.route('/callback', methods=['POST'])
 def callback():
@@ -472,9 +427,17 @@ def callback():
                 reply_token = event['replyToken']
                 print(f"收到使用者訊息: {user_text}")
 
-                reply_text = get_gemini_response(user_text)
-                print(f"Gemini 回應內容: {reply_text}")
+                # 💡 依照關鍵字給予精準、親切的固定回覆
+                if "車馬費" in user_text:
+                    reply_text = "您好！我們出發點是【台南新營】，服務範圍涵蓋雲林、嘉義、台南。車馬費依距離計算（例如下營約 200 元、水上約 400 元），會先幫您評估確認！"
+                elif "產品" in user_text or "介紹" in user_text:
+                    reply_text = "您好！建安大哥的服務項目包含：1. 二手電腦買賣與維修 2. RO 淨水器安裝與濾心更換 3. 監視器安裝與維護。歡迎詢問！"
+                elif "台南" in user_text or "嘉義" in user_text or "雲林" in user_text:
+                    reply_text = f"沒問題！我們在{user_text}提供到府維修與安裝服務，請告訴我們您需要的服務項目與詳細地址唷！"
+                else:
+                    reply_text = "您好！我是建安大哥的在地客服。我們提供雲嘉南地區的二手電腦、RO 淨水器與監視器到府安裝服務，請問有什麼我可以協助您的嗎？"
 
+                # 呼叫 LINE Reply API 回覆訊息
                 url = "https://api.line.me/v2/bot/message/reply"
                 headers = {
                     "Content-Type": "application/json",
@@ -486,12 +449,10 @@ def callback():
                 }
                 res = requests.post(url, headers=headers, json=payload)
                 print("LINE 回覆 API 狀態碼:", res.status_code)
-                print("LINE 回覆 API 回應內容:", res.text)
     except Exception as e:
         print(f"處理 LINE 自動回覆錯誤: {e}")
 
     return 'OK', 200
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
