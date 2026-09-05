@@ -413,7 +413,8 @@ def get_gemini_response(user_message):
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
         headers = {"Content-Type": "application/json"}
 
-        system_instruction = (
+        # 設定系統指令（規範 AI 的角色與服務範圍）
+        system_instruction_text = (
             "你是一個專業、親切且有禮貌的在地店家客服助理，店家老闆是建安大哥。 "
             "我們的業務範圍與服務項目如下：\n"
             "1. 服務地區嚴格限定在：【雲林、嘉義、台南】地區。如果客戶詢問其他縣市（如台中、台北等），請客氣告知目前未提供該地區服務。\n"
@@ -423,9 +424,13 @@ def get_gemini_response(user_message):
             "5. 請用繁體中文回覆，語氣要親切、像真人老闆或店長在跟客人對話一樣。"
         )
 
+        # 依照 Gemini 1.5 標準格式帶入 system_instruction 與 contents
         payload = {
+            "system_instruction": {
+                "parts": [{"text": system_instruction_text}]
+            },
             "contents": [
-                {"role": "user", "parts": [{"text": system_instruction + "\n\n客戶訊息：" + user_message}]}
+                {"role": "user", "parts": [{"text": user_message}]}
             ]
         }
 
