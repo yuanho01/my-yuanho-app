@@ -410,22 +410,21 @@ def delete_service(item_id):
 # 💡 呼叫 Google Gemini API 產生智慧回覆
 def get_gemini_response(user_message):
     try:
+        # 將模型名稱改為 gemini-1.5-flash 或 gemini-pro，確保 v1beta 抓得到
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
         headers = {"Content-Type": "application/json"}
 
-        # 將店家規範與老闆背景直接組在對話開頭，確保 AI 絕對遵守
         system_prompt = (
             "【系統角色與規範】\n"
             "你是一個專業、親切且有禮貌的在地店家客服助理，店家老闆是建安大哥。 \n"
             "我們的業務範圍與服務項目如下：\n"
-            "1. 服務地區嚴格限定在：【雲林、嘉義、台南】地區。如果客戶詢問其他縣市（如台中、台北等），請客氣告知目前未提供該地區服務。\n"
+            "1. 服務地區嚴格限定在：【雲林、嘉義、台南】地區。如果客戶詢問其他縣市，請客氣告知目前未提供該地區服務。\n"
             "2. 我們提供到府維修、安裝與服務，出發點是【台南新營】。\n"
             "3. 車馬費計算規則（依距離遠近從新營出發）：例如下營約 200 元、水上約 400 元，較遠或鄰近地區請根據新營出發的距離合理估算車馬費，並主動詢問客戶是否能接受。\n"
             "4. 核心產品與服務：二手電腦、RO 淨水器、監視器安裝與各項到府技術服務。\n"
             "5. 請用繁體中文回覆，語氣要親切、像真人老闆或店長在跟客人對話一樣。\n\n"
         )
 
-        # 採用最穩定、不易出錯的對話結構
         payload = {
             "contents": [
                 {
@@ -437,55 +436,16 @@ def get_gemini_response(user_message):
 
         response = requests.post(url, headers=headers, json=payload, timeout=10)
         res_json = response.json()
-        print("Gemini 回應 JSON:", res_json)  # 方便我們在 Render 日誌查看
+        print("Gemini 回應 JSON:", res_json)
 
+        # 正常抓取 AI 回答
         if 'candidates' in res_json and len(res_json['candidates']) > 0:
             return res_json['candidates'][0]['content']['parts'][0]['text']
         else:
-            return "您好！我是建安大哥的 AI 助理，請問有什麼關於二手電腦、RO淨水器或監視器可以幫您的嗎？"
+            # 如果還是有誤，把錯誤訊息印出來當作回覆
+            err_msg = res_json.get('error', {}).get('message', '未知錯誤')
+            return f"【AI連線提示】目前模型回應異常：{err_msg}"
+
     except Exception as e:
         print(f"Gemini API 呼叫錯誤: {e}")
-        return "您好！目前訊息較多，請直接撥打電話或稍後再試，我們將盡快為您處理！"
-
-@app.route('/callback', methods=['POST'])
-def callback():
-    body = request.get_json()
-    print("====== LINE Webhook 收到資料 ======", body)
-
-    try:
-        line_token = "DaL1aZe9xmFwD5cn7lpswPIpwGFyh8F1rG0VYn8GbBHuOdWTKWTpPOa8umgmy97dF6aVxm/DIpwGp5KQ9wEBsVO9tTrgKqSPeKYM+wXx/qO0iBJ/WagNnrjiLq16n76AXjFiQlSrHmnQDa5SOEjufQdB04t89/1O/w1cDnyilFU="
-
-        for event in body.get('events', []):
-            if event.get('type') == 'message' and event.get('message', {}).get('type') == 'text':
-                user_text = event['message']['text'].strip()
-                reply_token = event['replyToken']
-                print(f"收到使用者訊息: {user_text}")
-
-                # 透過 Google Gemini AI 產生智慧回應
-                try:
-                    reply_text = get_gemini_response(user_text)
-                    print(f"Gemini 回應內容: {reply_text}")
-                except Exception as ai_err:
-                    print(f"Gemini 呼叫失敗: {ai_err}")
-                    reply_text = "抱歉，Gemini 正在休息，請稍後再試！"
-
-                # 呼叫 LINE Reply API 回覆訊息
-                url = "https://api.line.me/v2/bot/message/reply"
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {line_token}"
-                }
-                payload = {
-                    "replyToken": reply_token,
-                    "messages": [{"type": "text", "text": reply_text}]
-                }
-                res = requests.post(url, headers=headers, json=payload)
-                print("LINE 回覆 API 狀態碼:", res.status_code)
-                print("LINE 回覆 API 回應內容:", res.text)
-    except Exception as e:
-        print(f"處理 LINE 自動回覆錯誤: {e}")
-
-    return 'OK', 200
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+        return f"【系統錯誤】{e}"
