@@ -413,37 +413,39 @@ def get_gemini_response(user_message):
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
         headers = {"Content-Type": "application/json"}
 
-        # 設定系統指令（規範 AI 的角色與服務範圍）
-        system_instruction_text = (
-            "你是一個專業、親切且有禮貌的在地店家客服助理，店家老闆是建安大哥。 "
+        # 將店家規範與老闆背景直接組在對話開頭，確保 AI 絕對遵守
+        system_prompt = (
+            "【系統角色與規範】\n"
+            "你是一個專業、親切且有禮貌的在地店家客服助理，店家老闆是建安大哥。 \n"
             "我們的業務範圍與服務項目如下：\n"
             "1. 服務地區嚴格限定在：【雲林、嘉義、台南】地區。如果客戶詢問其他縣市（如台中、台北等），請客氣告知目前未提供該地區服務。\n"
             "2. 我們提供到府維修、安裝與服務，出發點是【台南新營】。\n"
             "3. 車馬費計算規則（依距離遠近從新營出發）：例如下營約 200 元、水上約 400 元，較遠或鄰近地區請根據新營出發的距離合理估算車馬費，並主動詢問客戶是否能接受。\n"
             "4. 核心產品與服務：二手電腦、RO 淨水器、監視器安裝與各項到府技術服務。\n"
-            "5. 請用繁體中文回覆，語氣要親切、像真人老闆或店長在跟客人對話一樣。"
+            "5. 請用繁體中文回覆，語氣要親切、像真人老闆或店長在跟客人對話一樣。\n\n"
         )
 
-        # 依照 Gemini 1.5 標準格式帶入 system_instruction 與 contents
+        # 採用最穩定、不易出錯的對話結構
         payload = {
-            "system_instruction": {
-                "parts": [{"text": system_instruction_text}]
-            },
             "contents": [
-                {"role": "user", "parts": [{"text": user_message}]}
+                {
+                    "role": "user",
+                    "parts": [{"text": system_prompt + "客戶詢問：" + user_message}]
+                }
             ]
         }
 
         response = requests.post(url, headers=headers, json=payload, timeout=10)
         res_json = response.json()
+        print("Gemini 回應 JSON:", res_json)  # 方便我們在 Render 日誌查看
 
         if 'candidates' in res_json and len(res_json['candidates']) > 0:
             return res_json['candidates'][0]['content']['parts'][0]['text']
         else:
-            return "您好！收到您的訊息囉，我們將盡快為您處理！"
+            return "您好！我是建安大哥的 AI 助理，請問有什麼關於二手電腦、RO淨水器或監視器可以幫您的嗎？"
     except Exception as e:
         print(f"Gemini API 呼叫錯誤: {e}")
-        return "您好！目前訊息較多，我們將盡快由專人為您回覆！"
+        return "您好！目前訊息較多，請直接撥打電話或稍後再試，我們將盡快為您處理！"
 
 @app.route('/callback', methods=['POST'])
 def callback():
