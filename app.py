@@ -427,15 +427,15 @@ def callback():
                 reply_token = event['replyToken']
                 print(f"收到使用者訊息: {user_text}")
 
-                # 💡 依照關鍵字給予精準、親切的固定回覆
-                if "車馬費" in user_text:
-                    reply_text = "您好！我們出發點是【台南新營】，服務範圍涵蓋雲林、嘉義、台南。車馬費依距離計算（例如下營約 200 元、水上約 400 元），會先幫您評估確認！"
+                # 💡 依照您指定的關鍵字進行自動回覆
+                if "美食" in user_text or "地圖" in user_text:
+                    reply_text = "在地美食推薦：新營在地人常吃的肉圓、豆菜麵跟鱔魚意麵都很不錯！找時間帶您去品嚐在地好味道。"
+                elif "音樂" in user_text or "陳一郎" in user_text or "歌" in user_text:
+                    reply_text = "想聽經典好歌嗎？推薦您聽陳一郎的經典名曲《行船人的愛》或《紅燈碼頭》，非常有滄桑感的好聲音！"
                 elif "產品" in user_text or "介紹" in user_text:
-                    reply_text = "您好！建安大哥的服務項目包含：1. 二手電腦買賣與維修 2. RO 淨水器安裝與濾心更換 3. 監視器安裝與維護。歡迎詢問！"
-                elif "台南" in user_text or "嘉義" in user_text or "雲林" in user_text:
-                    reply_text = f"沒問題！我們在{user_text}提供到府維修與安裝服務，請告訴我們您需要的服務項目與詳細地址唷！"
+                    reply_text = "建安大哥的服務項目：1. 二手電腦買賣與維修 2. RO 淨水器安裝與濾心更換 3. 監視器安裝與維護。雲嘉南地區到府服務！"
                 else:
-                    reply_text = "您好！我是建安大哥的在地客服。我們提供雲嘉南地區的二手電腦、RO 淨水器與監視器到府安裝服務，請問有什麼我可以協助您的嗎？"
+                    reply_text = "您好！請輸入「美食」、「音樂」或「產品介紹」，讓小幫手為您提供資訊唷！"
 
                 # 呼叫 LINE Reply API 回覆訊息
                 url = "https://api.line.me/v2/bot/message/reply"
