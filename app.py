@@ -452,9 +452,15 @@ def callback():
             if event.get('type') == 'message' and event.get('message', {}).get('type') == 'text':
                 user_text = event['message']['text'].strip()
                 reply_token = event['replyToken']
+                print(f"收到使用者訊息: {user_text}")
 
                 # 透過 Google Gemini AI 產生智慧回應
-                reply_text = get_gemini_response(user_text)
+                try:
+                    reply_text = get_gemini_response(user_text)
+                    print(f"Gemini 回應內容: {reply_text}")
+                except Exception as ai_err:
+                    print(f"Gemini 呼叫失敗: {ai_err}")
+                    reply_text = "抱歉，Gemini 正在休息，請稍後再試！"
 
                 # 呼叫 LINE Reply API 回覆訊息
                 url = "https://api.line.me/v2/bot/message/reply"
