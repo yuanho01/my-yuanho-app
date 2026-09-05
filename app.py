@@ -413,14 +413,14 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# 從 Render 環境變數讀取金鑰
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 
 # 💡 呼叫 Google Gemini API 產生智慧回覆
 def get_gemini_response(user_message):
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        # 改用 v1 版本與 gemini-pro 模型，最為穩定
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
         headers = {"Content-Type": "application/json"}
 
         system_prompt = (
