@@ -20,7 +20,6 @@ DATA_FILE = 'data.json'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -103,7 +102,7 @@ def index():
     logged_in_user = session.get('logged_in_user', '')
     discount_total = int(subtotal * 0.9) if is_logged_in else subtotal
 
-    all_user_orders = [o for o in data.get('orders', []) if o.get('username') == logged_in_user] if is_logged_in else[]
+    all_user_orders = [o for o in data.get('orders', []) if o.get('username'] == logged_in_user] if is_logged_in else[]
     user_orders = [o for o in all_user_orders if o.get('status', 'active') in ['active', 'processing', 'shipped']]
     user_history_orders = [o for o in all_user_orders if o.get('status') == 'completed']
 
@@ -169,13 +168,21 @@ def checkout():
         data['orders'] = []
     data['orders'].insert(0, new_order)
 
+    # 儲存資料並同步至 GitHub
     save_data(data)
+
+    # 清空購物車
     session.pop('cart', None)
 
+    # ==========================================
     # 透過 LINE Messaging API 發送即時訂單通知
+    # ==========================================
     try:
         line_token = "DaL1aZe9xmFwD5cn7lpswPIpwGFyh8F1rG0VYn8GbBHuOdWTKWTpPOa8umgmy97dF6aVxm/DIpwGp5KQ9wEBsVO9tTrgKqSPeKYM+wXx/qO0iBJ/WagNnrjiLq16n76AXjFiQlSrHmnQDa5SOEjufQdB04t89/1O/w1cDnyilFU="
-        user_id = "Udf5ee6924620bc596fe3a3273adbc5ea"
+
+        # 💡 如果您之後找到自己的 LINE User ID (以 U 開頭)，可以把下方雙引號內的字串換掉；
+        # 目前先設定為自動發送或留空防呆，不影響訂單成立與後台運作。
+        user_id = ""
 
         if user_id:
             url = "https://api.line.me/v2/bot/message/push"
@@ -406,58 +413,6 @@ def delete_service(item_id):
     handle_delete_item('services', item_id)
     return redirect(url_for('admin'))
 
-
-import os
-from flask import Flask, request
-import requests
-
-app = Flask(__name__)
-
-# 💡 加上首頁路由，解決瀏覽器打開 404 的問題
-@app.route('/', methods=['GET'])
-def home():
-    return "建安大哥的 LINE 機器人服務中，系統運作正常！", 200
-
-@app.route('/callback', methods=['POST'])
-def callback():
-    body = request.get_json()
-    print("====== LINE Webhook 收到資料 ======", body)
-
-    try:
-        line_token = "DaL1aZe9xmFwD5cn7lpswPIpwGFyh8F1rG0VYn8GbBHuOdWTKWTpPOa8umgmy97dF6aVxm/DIpwGp5KQ9wEBsVO9tTrgKqSPeKYM+wXx/qO0iBJ/WagNnrjiLq16n76AXjFiQlSrHmnQDa5SOEjufQdB04t89/1O/w1cDnyilFU="
-
-        for event in body.get('events', []):
-            if event.get('type') == 'message' and event.get('message', {}).get('type') == 'text':
-                user_text = event['message']['text'].strip()
-                reply_token = event['replyToken']
-                print(f"收到使用者訊息: {user_text}")
-
-                # 💡 依照您指定的關鍵字進行自動回覆
-                if "美食" in user_text or "地圖" in user_text:
-                    reply_text = "在地美食推薦：新營在地人常吃的肉圓、豆菜麵跟鱔魚意麵都很不錯！找時間帶您去品嚐在地好味道。"
-                elif "音樂" in user_text or "陳一郎" in user_text or "歌" in user_text:
-                    reply_text = "想聽經典好歌嗎？推薦您聽陳一郎的經典名曲《行船人的愛》或《紅燈碼頭》，非常有滄桑感的好聲音！"
-                elif "產品" in user_text or "介紹" in user_text:
-                    reply_text = "建安大哥的服務項目：1. 二手電腦買賣與維修 2. RO 淨水器安裝與濾心更換 3. 監視器安裝與維護。雲嘉南地區到府服務！"
-                else:
-                    reply_text = "您好！請輸入「美食」、「音樂」或「產品介紹」，讓小幫手為您提供資訊唷！"
-
-                # 呼叫 LINE Reply API 回覆訊息
-                url = "https://api.line.me/v2/bot/message/reply"
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {line_token}"
-                }
-                payload = {
-                    "replyToken": reply_token,
-                    "messages": [{"type": "text", "text": reply_text}]
-                }
-                res = requests.post(url, headers=headers, json=payload)
-                print("LINE 回覆 API 狀態碼:", res.status_code)
-    except Exception as e:
-        print(f"處理 LINE 自動回覆錯誤: {e}")
-
-    return 'OK', 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
