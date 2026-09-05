@@ -1,0 +1,329 @@
+{
+    "contact": {
+        "region": "雲、嘉、南到府服務",
+        "phone": "0988-562-288",
+        "line_id": "@403wemjq"
+    },
+    "news": [],
+    "products": [
+        {
+            "id": 1,
+            "title": "五道家用腳架型 75G RO機 (型號：KR51107)",
+            "description": "<div class=\"product-description\">\r\n    <p><strong>產品型號：</strong>KR51107（台灣組裝製造）</p>\r\n    <p><strong>核心特色：</strong>孔徑 0.0001 微米，有效去除重金屬與雜質，過濾後達生飲等級純水。</p>\r\n    <p><strong>五道濾心配置：</strong><br>\r\n    • 第 1 道：10 吋 PP 棉質濾心 (建議 3 個月更換)<br>\r\n    • 第 2 道：10 吋 UDF 顆粒活性碳濾心 (建議 6 個月更換)<br>\r\n    • 第 3 道：10 吋 CTO 壓縮活性碳濾心 (建議 6 個月更換)<br>\r\n    • 第 4 道：75G RO 逆滲透膜 (建議 12-24 個月更換)<br>\r\n    • 第 5 道：椰殼後置活性碳小 T (建議 12 個月更換)</p>\r\n    <p><strong>標準配件：</strong>含 5 道濾心、RO-132 壓力桶、鵝頸龍頭、2 分管 5 米及安裝配件包。</p>\r\n    <p class=\"text-muted small\"><strong>貼心提醒：</strong>安裝需備妥水源與電源；初次使用建議將壓力桶注滿後的第一桶水排掉以去除新品氣味。</p>\r\n</div>",
+            "price": "",
+            "link_url": "",
+            "image": "1788522537_562288.png"
+        }
+    ],
+    "shop_items": [
+        {
+            "id": 1,
+            "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+            "description": "",
+            "price": "25000",
+            "link_url": "",
+            "image": "1788523471_image_d1b591c1.jpg"
+        }
+    ],
+    "services": [
+        {
+            "id": 4,
+            "title": "到府服務與車馬費說明",
+            "description": "服務範圍：專人到府貼心服務，涵蓋雲林縣、嘉義縣市、台南市等區域。\r\n車馬費說明：為維持到府服務品質，將依照實際路程遠近，酌收新台幣 200 至 600 元不等的車馬費，出發前皆會先行與您確認。",
+            "price": "",
+            "link_url": "",
+            "image": "1788519050_image_8e299104.jpg"
+        },
+        {
+            "id": 3,
+            "title": "監視器系統安裝與維修",
+            "description": "服務標題：安全監視器全新安裝與故障維修\r\n服務內容：守護居家、店面與廠房安全，提供高畫質監視器系統規劃、全新拉線安裝、手機遠端監看設定，以及鏡頭故障、主機異常等維修調整服務。",
+            "price": "",
+            "link_url": "",
+            "image": "1788517706_image_2e7ab49a.jpg"
+        },
+        {
+            "id": 2,
+            "title": "RO濾水器維修與新機安裝",
+            "description": "服務標題：RO逆滲透濾水器換濾芯、維修與新機安裝\r\n服務內容：確保全家飲水健康與安全，提供各大品牌RO逆滲透濾水器定期更換濾芯、漏水故障維修，以及家庭與營業用淨水設備的全新到府安裝與水質檢測服務。",
+            "price": "",
+            "link_url": "",
+            "image": "1788517579_image_64a2e62a.jpg"
+        },
+        {
+            "id": 1,
+            "title": "二手電腦買賣與系統重灌維修",
+            "description": "服務標題：二手電腦買賣、系統重灌與故障維修\r\n\r\n服務內容：提供平價實用的二手電腦買賣，解決電腦開機緩慢、當機、中毒等問題。包含專業作業系統重灌、內部清潔以及各項硬體故障檢修，讓老舊電腦重獲新生，使用更順暢。",
+            "price": "",
+            "link_url": "",
+            "image": "1788517407_image_4830de1d.jpg"
+        }
+    ],
+    "users": {
+        "yuanho01": "562288Kc",
+        "d0973369969": "Aa014156",
+        "": ""
+    },
+    "orders": [
+        {
+            "order_id": "1788604926",
+            "username": "d0973369969",
+            "name": "陳建安",
+            "phone": "0988562288",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 22500,
+            "is_member_discount": true,
+            "time": "2026-09-05 18:42:06",
+            "status": "processing"
+        },
+        {
+            "order_id": "1788604080",
+            "username": "d0973369969",
+            "name": "填一填姓名",
+            "phone": "0123456789",
+            "address": "我亂填的啦",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 22500,
+            "is_member_discount": true,
+            "time": "2026-09-05 18:28:00",
+            "status": "processing"
+        },
+        {
+            "order_id": "1788591258",
+            "username": "yuanho01",
+            "name": "陳建安",
+            "phone": "0988562288",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 22500,
+            "is_member_discount": true,
+            "time": "2026-09-05 14:54:18",
+            "status": "completed"
+        },
+        {
+            "order_id": "1788588890",
+            "username": "yuanho01",
+            "name": "陳建安",
+            "phone": "0988562288",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 22500,
+            "is_member_discount": true,
+            "time": "2026-09-05 14:14:50",
+            "status": "completed"
+        },
+        {
+            "order_id": "1788588737",
+            "username": "訪客",
+            "name": "我要買",
+            "phone": "0988562288",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 25000,
+            "is_member_discount": false,
+            "time": "2026-09-05 14:12:17",
+            "status": "completed"
+        },
+        {
+            "order_id": "1788535623",
+            "username": "yuanho01",
+            "name": "陳源和",
+            "phone": "0988562288",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 22500,
+            "is_member_discount": true,
+            "time": "2026-09-04 23:27:03",
+            "status": "completed"
+        },
+        {
+            "order_id": "1788532857",
+            "username": "訪客",
+            "name": "陳建安王",
+            "phone": "0988562288",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 25000,
+            "is_member_discount": false,
+            "time": "2026-09-04 22:40:57",
+            "status": "completed"
+        },
+        {
+            "order_id": "1788531919",
+            "username": "訪客",
+            "name": "星期六",
+            "phone": "0973369969",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 25000,
+            "is_member_discount": false,
+            "time": "2026-09-04 22:25:19",
+            "status": "completed"
+        },
+        {
+            "order_id": "1788531824",
+            "username": "訪客",
+            "name": "林老師",
+            "phone": "0987654321",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 25000,
+            "is_member_discount": false,
+            "time": "2026-09-04 22:23:44",
+            "status": "completed"
+        },
+        {
+            "order_id": "1788531461",
+            "username": "訪客",
+            "name": "王陳蘇",
+            "phone": "0988-562-288",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 25000,
+            "is_member_discount": false,
+            "time": "2026-09-04 22:17:41",
+            "status": "completed"
+        },
+        {
+            "order_id": "1788530768",
+            "username": "訪客",
+            "name": "蘇千足",
+            "phone": "0973369969",
+            "address": "桃園市中壢區民族路3段210號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 25000,
+            "is_member_discount": false,
+            "time": "2026-09-04 22:06:08",
+            "status": "completed"
+        },
+        {
+            "order_id": "1788530481",
+            "username": "yuanho01",
+            "name": "陳建安",
+            "phone": "0988562288",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 22500,
+            "is_member_discount": true,
+            "time": "2026-09-04 22:01:21",
+            "status": "completed"
+        },
+        {
+            "order_id": "1788530474",
+            "username": "yuanho01",
+            "name": "陳建安",
+            "phone": "0988562288",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 22500,
+            "is_member_discount": true,
+            "time": "2026-09-04 22:01:14",
+            "status": "completed"
+        }
+    ]
+}

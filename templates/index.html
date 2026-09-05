@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% block title %}陳建安 - 技術服務與線上賣場{% endblock %}
+{% block content %}
+<!-- 💡 雲端主機喚醒中的載入提示遮罩 (針對 Render 免費主機休眠設計) -->
+<div id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #ffffff; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: sans-serif; transition: opacity 0.5s ease;">
+    <div style="font-size: 22px; font-weight: bold; color: #0d6efd; margin-bottom: 12px;">雲嘉南二手電腦</div>
+    <div style="font-size: 16px; color: #555555;">主機正在連線啟動中，請稍候...</div>
+</div>
+
+<script>
+    // 💡 當網頁完全載入後，自動隱藏提示畫面
+    window.addEventListener('load', function() {
+        var loader = document.getElementById('loading-overlay');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(function() {
+                loader.style.display = 'none';
+            }, 500); // 0.5秒淡出特效
+        }
+    });
+</script>
+
+<div class="jumbotron bg-primary text-white rounded p-4 mb-4 text-center">
+    <h1 class="display-5 font-weight-bold">陳建安個人技術服務工作室</h1>
+    <p class="lead">專業,誠信,在地實惠到府服務（RO淨水器、監視器、電腦維修）</p>
+
+    <!-- 新增：LINE QR Code 與加好友按鈕區塊 -->
+    <div class="my-3 p-3 bg-white rounded shadow-sm d-inline-block text-dark">
+        <p class="mb-2 fw-bold text-success">📱 掃描 QR Code 或點擊下方按鈕加 LINE 好友</p>
+        <!-- 顯示 QR Code 圖片 (請確保圖片名稱與 static/uploads/ 內的檔名一致) -->
+        <img src="{{ url_for('static', filename='uploads/M_gainfriends_2dbarcodes_GW.png') }}" alt="LINE QR Code" style="width: 130px; height: 130px;" class="mb-2 border p-1 bg-light">
+        <div>
+            <a href="https://line.me/R/ti/p/@403wemjq" target="_blank" class="btn btn-success btn-sm fw-bold">
+                💬 點我直接加 LINE 洽詢
+            </a>
+        </div>
+    </div>
+    <!-- 結束 LINE 區塊 -->
+
+    <hr class="my-3 bg-light">
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-3">
+        <span class="badge bg-warning text-dark p-2">📍 服務區域：{{ contact.region }}</span>
+        <span class="badge bg-light text-dark p-2">☎️ 服務電話：{{ contact.phone }}</span>
+        <span class="badge bg-success text-white p-2">💬 LINE ID：{{ contact.line_id }}</span>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 左側主內容區 -->
+    <div class="col-lg-8 col-md-12">
+        <!-- 技術服務項目 -->
+        <div class="mb-5">
+            <h3 class="border-bottom pb-2 text-secondary">🛠️ 技術服務項目</h3>
+            <div class="row">
+                {% for item in services %}
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        {% if item.image %}<img src="{{ url_for('static', filename='uploads/' + item.image) }}" class="card-img-top" style="height: 160px; object-fit: cover;">{% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">{{ item.title }}</h5>
+                            <p class="card-text text-muted">{{ item.description | safe }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted">目前尚無技術服務項目。</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 產品型錄 -->
+        <div class="mb-5">
+            <h3 class="border-bottom pb-2 text-secondary">📂 產品型錄</h3>
+            <div class="row">
+                {% for item in products %}
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        {% if item.image %}<img src="{{ url_for('static', filename='uploads/' + item.image) }}" class="card-img-top" style="height: 160px; object-fit: cover;">{% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title text-success">{{ item.title }}</h5>
+                            <p class="card-text text-muted">{{ item.description | safe }}</p>
+                            {% if item.link_url %}<a href="{{ item.link_url }}" target="_blank" class="btn btn-outline-success btn-sm">查看詳情</a>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted">目前尚無產品型錄資料。</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 線上賣場 -->
+        <div class="mb-5">
+            <h3 class="border-bottom pb-2 text-secondary">🛒 線上賣場 (可加入購物車)</h3>
+            <div class="row">
+                {% for item in shop_items %}
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        {% if item.image %}<img src="{{ url_for('static', filename='uploads/' + item.image) }}" class="card-img-top" style="height: 160px; object-fit: cover;">{% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title text-danger">{{ item.title }}</h5>
+                            <p class="card-text fw-bold text-dark">{{ item.price }}</p>
+                            <a href="/add_to_cart/{{ item.id }}" class="btn btn-danger btn-sm mt-auto">加入購物車</a>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted">目前尚無賣場商品上架。</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 右側購物車與會員專區 -->
+    <div class="col-lg-4 col-md-12">
+        <div class="card shadow p-3 sticky-top mb-4" style="top: 20px;">
+            <h4 class="mb-3 text-secondary">🛒 您的購物車</h4>
+            {% if cart_items %}
+                <ul class="list-group mb-3">
+                    {% for item in cart_items %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="my-0">{{ item.title }}</h6>
+                            <small class="text-muted">數量：{{ item.quantity }}</small>
+                        </div>
+                        <span class="text-muted">NT$ {{ item.total }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="border-top pt-2 mb-3">
+                    <p class="mb-1">商品原總額：<span class="float-end">NT$ {{ subtotal }}</span></p>
+                    {% if is_logged_in %}
+                        <p class="mb-2 text-success fw-bold">會員 9 折優惠價：<span class="float-end">NT$ {{ discount_total }}</span></p>
+                    {% else %}
+                        <p class="mb-2 text-muted small">💡 <a href="/user_login">登入會員</a> 即可享有結帳 9 折優惠！</p>
+                        <p class="mb-2 fw-bold">應付總額：<span class="float-end">NT$ {{ subtotal }}</span></p>
+                    {% endif %}
+                </div>
+
+                <!-- 結帳表單 -->
+                <form action="/checkout" method="POST" class="mb-2">
+                    <h6 class="text-secondary mb-2 border-top pt-2">填寫收件資訊：</h6>
+                    <div class="mb-2">
+                        <input type="text" name="name" class="form-control form-control-sm" placeholder="收件人姓名" required>
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" name="phone" class="form-control form-control-sm" placeholder="連絡電話 (例如: 0988xxxxxx)" required>
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" name="address" class="form-control form-control-sm" placeholder="完整收件地址" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 mb-2">確認送出結帳訂單</button>
+                </form>
+                <a href="/clear_cart" class="btn btn-outline-secondary btn-sm w-100">清空購物車</a>
+            {% else %}
+                <p class="text-muted">目前購物車是空的，快去賣場選購吧！</p>
+            {% endif %}
+        </div>
+
+        <!-- 會員專屬：進行中訂單與歷史紀錄專區 -->
+        {% if is_logged_in %}
+        <div class="card shadow p-3 bg-light">
+            <!-- 1. 進行中的訂單 -->
+            <h5 class="text-primary mb-3">📦 進行中的訂單</h5>
+            {% if user_orders %}
+                <div class="accordion mb-3" id="orderAccordion">
+                    {% for order in user_orders %}
+                    <div class="card mb-2">
+                        <div class="card-header bg-white py-2" id="heading{{ order.order_id }}">
+                            <h6 class="mb-0">
+                                <button class="btn btn-link btn-sm text-decoration-none text-dark p-0 w-100 text-start d-flex justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ order.order_id }}">
+                                    <span>單號: {{ order.order_id }}</span>
+                                    <span class="text-danger fw-bold">NT$ {{ order.final_total }}</span>
+                                </button>
+                            </h6>
+                            <small class="text-muted">{{ order.time }}</small>
+                        </div>
+                        <div id="collapse{{ order.order_id }}" class="collapse" aria-labelledby="heading{{ order.order_id }}" data-bs-parent="#orderAccordion">
+                            <div class="card-body py-2">
+                                <ul class="list-unstyled small mb-2">
+                                    {% if order.get('items') %}
+                                        {% for o_item in order.get('items') %}
+                                        <li>• {{ o_item.title }} (x{{ o_item.quantity }}) - NT$ {{ o_item.total }}</li>
+                                        {% endfor %}
+                                    {% endif %}
+                                </ul>
+
+                                <!-- 根據訂單狀態顯示不同的提示或按鈕 -->
+                                {% if order.status == 'shipped' %}
+                                    <div class="alert alert-warning py-1 px-2 small mb-2 text-center">
+                                        🚚 管理員已出貨，請收到商品後點擊確認！
+                                    </div>
+                                    <form action="{{ url_for('user_complete_order', order_id=order.order_id) }}" method="POST">
+                                        <button type="submit" class="btn btn-success btn-sm w-100" onclick="return confirm('確定已經收到貨了嗎？確認後訂單將完成並移至歷史紀錄。');">
+                                            📦 我已收到貨
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <div class="text-muted small text-center bg-light py-1 rounded">
+                                        ⏳ 處理中 / 備貨中（等待管理員出貨）
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted small mb-3">目前沒有進行中的訂單。</p>
+            {% endif %}
+
+            <!-- 2. 歷史紀錄 (已完成/已收貨) -->
+            <h5 class="text-secondary mb-2 border-top pt-3">📋 歷史訂單紀錄</h5>
+            {% if user_history_orders %}
+                <div class="accordion" id="historyAccordion">
+                    {% for order in user_history_orders %}
+                    <div class="card mb-2 bg-white">
+                        <div class="card-header bg-light py-2" id="hHeading{{ order.order_id }}">
+                            <h6 class="mb-0">
+                                <button class="btn btn-link btn-sm text-decoration-none text-muted p-0 w-100 text-start d-flex justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#hCollapse{{ order.order_id }}">
+                                    <span>單號: {{ order.order_id }}</span>
+                                    <span class="text-success fw-bold">NT$ {{ order.final_total }}</span>
+                                </button>
+                            </h6>
+                            <small class="text-muted">{{ order.time }} (已完成)</small>
+                        </div>
+                        <div id="hCollapse{{ order.order_id }}" class="collapse" aria-labelledby="hHeading{{ order.order_id }}" data-bs-parent="#historyAccordion">
+                            <div class="card-body py-2">
+                                <ul class="list-unstyled small mb-0">
+                                    {% if order.get('items') %}
+                                        {% for o_item in order.get('items') %}
+                                        <li>• {{ o_item.title }} (x{{ o_item.quantity }}) - NT$ {{ o_item.total }}</li>
+                                        {% endfor %}
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted small mb-0">目前沒有歷史訂單紀錄。</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

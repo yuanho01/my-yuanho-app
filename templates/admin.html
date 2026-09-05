@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% block title %}後台管理中心 - 陳建安工作室{% endblock %}
+{% block content %}
+<div class="row">
+    <!-- 左側導覽與狀態 -->
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm p-3 sticky-top" style="top: 20px;">
+            <h4 class="text-primary mb-3">後台管理選單</h4>
+            <div class="list-group">
+                <a href="#contact-section" class="list-group-item list-group-item-action">聯絡資訊設定</a>
+                <a href="#service-section" class="list-group-item list-group-item-action">技術服務項目管理</a>
+                <a href="#product-section" class="list-group-item list-group-item-action">產品型錄管理</a>
+                <a href="#shop-section" class="list-group-item list-group-item-action">線上賣場商品上架/下架</a>
+                <!-- 透過 onclick 觸發切換顯示函式 -->
+                <a href="#order-section" class="list-group-item list-group-item-action" onclick="switchOrderTab('active')">客戶訂單管理</a>
+                <a href="#history-order-section" class="list-group-item list-group-item-action" onclick="switchOrderTab('history')">歷史訂單紀錄</a>
+            </div>
+            <hr>
+            <a href="/" class="btn btn-outline-secondary btn-sm mb-2" target="_blank">檢視前台首頁</a>
+            <a href="/logout" class="btn btn-danger btn-sm">登出後台</a>
+        </div>
+    </div>
+
+    <!-- 右側主要編輯區 -->
+    <div class="col-md-9">
+
+        <!-- 1. 聯絡資訊設定 -->
+        <div id="contact-section" class="card shadow-sm p-4 mb-4">
+            <h4 class="text-secondary border-bottom pb-2">📍 修改工作室聯絡資訊</h4>
+            <form action="/admin/update_contact" method="POST">
+                <div class="mb-3">
+                    <label class="form-label">服務區域</label>
+                    <input type="text" name="region" class="form-control" value="{{ contact.region }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">服務電話</label>
+                    <input type="text" name="phone" class="form-control" value="{{ contact.phone }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">LINE ID</label>
+                    <input type="text" name="line_id" class="form-control" value="{{ contact.line_id }}">
+                </div>
+                <button type="submit" class="btn btn-primary">儲存聯絡資訊</button>
+            </form>
+        </div>
+
+        <!-- 2. 技術服務項目管理 -->
+        <div id="service-section" class="card shadow-sm p-4 mb-4">
+            <h4 class="text-secondary border-bottom pb-2">🛠️ 技術服務項目（新增文章與編輯）</h4>
+            <form action="/admin/add_service" method="POST" enctype="multipart/form-data" class="mb-4 bg-light p-3 rounded">
+                <h6 class="text-primary">新增一筆技術服務</h6>
+                <div class="mb-2">
+                    <input type="text" name="title" class="form-control" placeholder="服務標題（例如：RO淨水器安裝）" required>
+                </div>
+                <div class="mb-2">
+                    <textarea name="description" class="form-control" placeholder="服務內容詳細說明..." rows="2"></textarea>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small text-muted">上傳代表圖片：</label>
+                    <input type="file" name="image" class="form-control form-control-sm">
+                </div>
+                <button type="submit" class="btn btn-success btn-sm">新增技術服務文章</button>
+            </form>
+
+            <h6 class="text-muted">現有技術服務清單（可隨時刪除下架）：</h6>
+            <div class="list-group">
+                {% for item in services %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1 fw-bold">{{ item.title }}</h6>
+                        <p class="mb-0 text-muted small">{{ item.description }}</p>
+                    </div>
+                    <form action="/admin/delete_service/{{ item.id }}" method="POST" class="mb-0">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('確定要刪除這項服務嗎？')">刪除</button>
+                    </form>
+                </div>
+                {% else %}
+                <p class="text-muted small">目前尚無資料。</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 3. 產品型錄管理 -->
+        <div id="product-section" class="card shadow-sm p-4 mb-4">
+            <h4 class="text-secondary border-bottom pb-2">📂 產品型錄管理（新增文章與編輯）</h4>
+            <form action="/admin/add_product" method="POST" enctype="multipart/form-data" class="mb-4 bg-light p-3 rounded">
+                <h6 class="text-success">新增一筆產品型錄文章</h6>
+                <div class="mb-2">
+                    <input type="text" name="title" class="form-control" placeholder="產品名稱" required>
+                </div>
+                <div class="mb-2">
+                    <textarea name="description" class="form-control" placeholder="產品介紹說明..." rows="2"></textarea>
+                </div>
+                <div class="mb-2">
+                    <input type="text" name="link_url" class="form-control" placeholder="外部相關連結網址 (選填)">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small text-muted">上傳產品圖片：</label>
+                    <input type="file" name="image" class="form-control form-control-sm">
+                </div>
+                <button type="submit" class="btn btn-success btn-sm">新增產品型錄文章</button>
+            </form>
+
+            <h6 class="text-muted">現有產品型錄清單：</h6>
+            <div class="list-group">
+                {% for item in products %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1 fw-bold">{{ item.title }}</h6>
+                        <p class="mb-0 text-muted small">{{ item.description }}</p>
+                    </div>
+                    <form action="/admin/delete_product/{{ item.id }}" method="POST" class="mb-0">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('確定要刪除這項產品嗎？')">刪除</button>
+                    </form>
+                </div>
+                {% else %}
+                <p class="text-muted small">目前尚無資料。</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 4. 線上賣場商品上架/下架 -->
+        <div id="shop-section" class="card shadow-sm p-4 mb-4">
+            <h4 class="text-secondary border-bottom pb-2">🛒 線上賣場商品管理（上架 / 下架）</h4>
+            <form action="/admin/add_shop" method="POST" enctype="multipart/form-data" class="mb-4 bg-light p-3 rounded">
+                <h6 class="text-danger">上架新商品</h6>
+                <div class="mb-2">
+                    <input type="text" name="title" class="form-control" placeholder="商品名稱" required>
+                </div>
+                <div class="mb-2">
+                    <input type="text" name="price" class="form-control" placeholder="價格（例如：NT$ 1,000）" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small text-muted">上傳商品照片：</label>
+                    <input type="file" name="image" class="form-control form-control-sm">
+                </div>
+                <button type="submit" class="btn btn-danger btn-sm">立即上架商品</button>
+            </form>
+
+            <h6 class="text-muted">目前已上架的商品清單（點擊刪除即為下架）：</h6>
+            <div class="list-group">
+                {% for item in shop_items %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1 fw-bold">{{ item.title }}</h6>
+                        <span class="text-danger small fw-bold">價格：{{ item.price }}</span>
+                    </div>
+                    <form action="/admin/delete_shop/{{ item.id }}" method="POST" class="mb-0">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('確定要將此商品下架刪除嗎？')">下架商品</button>
+                    </form>
+                </div>
+                {% else %}
+                <p class="text-muted small">目前尚無上架商品。</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 5. 客戶訂單管理區塊 (顯示處理中與已出貨中) -->
+        <div id="order-section" class="card shadow-sm p-4 mb-4 order-tab-content">
+            <h4 class="text-secondary border-bottom pb-2">📦 客戶訂單管理（處理中 / 已出貨）</h4>
+            <p class="text-muted small">在此檢視尚未完成的訂單。管理員點擊「點擊出貨」後，訂單會進入「已出貨」狀態等待會員確認：</p>
+
+            {% set active_orders = [] %}
+            {% for order in orders %}
+                {# 包含舊有的未設定狀態、'active'、'processing' 以及 'shipped' #}
+                {% set status = order.status | default('processing') %}
+                {% if status in ['processing', 'active', 'shipped'] %}
+                    {% set _ = active_orders.append(order) %}
+                {% endif %}
+            {% endfor %}
+
+            {% if active_orders and active_orders|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>訂單編號 / 時間</th>
+                                <th>會員 / 收件人資訊</th>
+                                <th>訂購品項與數量</th>
+                                <th>折後總價</th>
+                                <th>目前狀態</th>
+                                <th>管理操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in active_orders %}
+                            <tr>
+                                <td>
+                                    <code class="fw-bold text-primary">{{ order.order_id }}</code><br>
+                                    <span class="text-muted" style="font-size: 0.75rem;">{{ order.time }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary mb-1">會員: {{ order.username }}</span><br>
+                                    <strong>姓名：</strong>{{ order.name }}<br>
+                                    <strong>電話：</strong>{{ order.phone }}<br>
+                                    <strong>地址：</strong>{{ order.address }}
+                                </td>
+                                <td>
+                                    <ul class="list-unstyled mb-0">
+                                        {% if order.items is iterable and order.items is not string %}
+                                            {% for item in order.items %}
+                                            <li>• {{ item.title }} x {{ item.quantity }} (NT$ {{ item.total }})</li>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </ul>
+                                </td>
+                                <td><strong class="text-danger">NT$ {{ order.final_total }}</strong></td>
+                                <td>
+                                    {% if order.status == 'shipped' %}
+                                        <span class="badge bg-warning text-dark">已出貨 (等待買家收貨)</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">處理中 (待出貨)</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if order.status != 'shipped' %}
+                                        <form action="{{ url_for('complete_order', order_id=order.order_id) }}" method="POST" class="mb-0">
+                                            <button type="submit" class="btn btn-warning btn-sm w-100" onclick="return confirm('確定要將此訂單標記為【已出貨】嗎？')">🚚 點擊出貨</button>
+                                        </form>
+                                    {% else %}
+                                        <span class="text-muted small text-center d-block">等待買家點選「我已收到貨」</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">目前沒有需要處理的客戶訂單。</p>
+            {% endif %}
+        </div>
+
+        <!-- 6. 已完成的歷史訂單區塊 (會員點擊「我已收到貨」後的已完成訂單) -->
+        <div id="history-order-section" class="card shadow-sm p-4 mb-4 order-tab-content" style="display: none;">
+            <h4 class="text-secondary border-bottom pb-2">📋 已完成歷史訂單紀錄</h4>
+            <p class="text-muted small">在此檢視買家已點擊「我已收到貨」完成交易的歷史訂單：</p>
+
+            {% set completed_orders = [] %}
+            {% for order in orders %}
+                {% if order.status == 'completed' %}
+                    {% set _ = completed_orders.append(order) %}
+                {% endif %}
+            {% endfor %}
+
+            {% if completed_orders and completed_orders|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered align-middle small text-muted">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>訂單編號 / 時間</th>
+                                <th>會員 / 收件人資訊</th>
+                                <th>訂購品項與數量</th>
+                                <th>折後總價</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in completed_orders %}
+                            <tr>
+                                <td>
+                                    <code class="fw-bold text-dark">{{ order.order_id }}</code><br>
+                                    <span style="font-size: 0.75rem;">{{ order.time }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border mb-1">會員: {{ order.username }}</span><br>
+                                    <strong>姓名：</strong>{{ order.name }}<br>
+                                    <strong>電話：</strong>{{ order.phone }}<br>
+                                    <strong>地址：</strong>{{ order.address }}
+                                </td>
+                                <td>
+                                    <ul class="list-unstyled mb-0">
+                                        {% if order.items is iterable and order.items is not string %}
+                                            {% for item in order.items %}
+                                            <li>• {{ item.title }} x {{ item.quantity }} (NT$ {{ item.total }})</li>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </ul>
+                                </td>
+                                <td><strong>NT$ {{ order.final_total }}</strong></td>
+                                <td><span class="badge bg-success">已完成 (買家已收貨)</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">目前尚無歷史訂單紀錄。</p>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<!-- 簡單的切換顯示 JavaScript -->
+<script>
+function switchOrderTab(type) {
+    const activeSection = document.getElementById('order-section');
+    const historySection = document.getElementById('history-order-section');
+
+    if (type === 'active') {
+        activeSection.style.display = 'block';
+        historySection.style.display = 'none';
+    } else if (type === 'history') {
+        activeSection.style.display = 'none';
+        historySection.style.display = 'block';
+    }
+}
+</script>
+{% endblock %}

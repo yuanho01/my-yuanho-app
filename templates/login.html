@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>後台登入</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f4f7f6; }
+        .login-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
+        input[type="password"] { padding: 0.5rem; width: 80%; margin: 1rem 0; }
+        button { padding: 0.5rem 1.5rem; background: #1b4965; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>工作室網站後台登入</h2>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <p style="color: red;">{{ messages[0] }}</p>
+            {% endif %}
+        {% endwith %}
+        <form method="POST">
+            <input type="password" name="password" placeholder="請輸入管理員密碼" required><br>
+            <button type="submit">登入</button>
+        </form>
+    </div>
+</body>
+</html>

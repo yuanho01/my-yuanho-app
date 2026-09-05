@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}會員登入 - 享9折優惠{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm p-4">
+            <h3 class="text-center mb-3 text-primary">會員登入</h3>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for cat, msg in messages %}
+                        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">會員帳號</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">密碼</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">立即登入</button>
+            </form>
+            <div class="text-center mt-3">
+                <a href="/register">還不是會員？點此註冊享9折</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
