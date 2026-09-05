@@ -453,8 +453,8 @@ def callback():
                 user_text = event['message']['text'].strip()
                 reply_token = event['replyToken']
 
-                # 透過 Google Gemini AI 產生智慧回應
-                reply_text = get_gemini_response(user_text)
+                # 測試直接回傳固定文字
+                reply_text = "建安大哥你好，我是您的 AI 助理！"
 
                 # 呼叫 LINE Reply API 回覆訊息
                 url = "https://api.line.me/v2/bot/message/reply"
@@ -469,7 +469,6 @@ def callback():
                 res = requests.post(url, headers=headers, json=payload)
                 print("LINE 回覆 API 狀態碼:", res.status_code)
                 print("LINE 回覆 API 回應內容:", res.text)
-
     except Exception as e:
         print(f"處理 LINE 自動回覆錯誤: {e}")
 
