@@ -103,7 +103,7 @@ def index():
     logged_in_user = session.get('logged_in_user', '')
     discount_total = int(subtotal * 0.9) if is_logged_in else subtotal
 
-    all_user_orders = [o for o in data.get('orders', []) if o.get('username'] == logged_in_user] if is_logged_in else[]
+    all_user_orders = [o for o in data.get('orders', []) if o.get('username') == logged_in_user] if is_logged_in else []
     user_orders = [o for o in all_user_orders if o.get('status', 'active') in ['active', 'processing', 'shipped']]
     user_history_orders = [o for o in all_user_orders if o.get('status') == 'completed']
 
