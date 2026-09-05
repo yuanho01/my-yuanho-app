@@ -413,6 +413,11 @@ import requests
 
 app = Flask(__name__)
 
+# 💡 加上首頁路由，解決瀏覽器打開 404 的問題
+@app.route('/', methods=['GET'])
+def home():
+    return "建安大哥的 LINE 機器人服務中，系統運作正常！", 200
+
 @app.route('/callback', methods=['POST'])
 def callback():
     body = request.get_json()
