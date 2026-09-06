@@ -446,10 +446,10 @@ def handle_message(event):
 
     # 1. 偵測是否想找真人客服
     if any(keyword in user_text for keyword in ["真人", "老闆", "人工", "電話", "專人"]):
-        reply_text = "📞 您好！您可以直接撥打建安工作室服務專線：0988-562-288，將由專人為您服務！或者您也可以輸入「你好！我要找客服」線上留資料。"
+        reply_text = "📞 您好！您可以直接撥打建安工作室服務專線：0988-562-288，將由專人為您服務！或者您也可以直接在圖文選單中按一下「線上客服」，我們將為您登記聯絡資訊，安排專人為您服務喔！"
 
-    # 2. 觸發機器人登記流程
-    elif "你好！我要找客服" in user_text:
+    # 2. 觸發機器人登記流程（支援多種常見關鍵字，不包含單獨的「你好」）
+    elif any(keyword in user_text for keyword in ["你好我要找客服", "你好！我要找客服", "我要找客服", "找客服"]):
         reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n請先輸入您的【聯絡人姓名】："
         user_state["step"] = "get_name"
         user_state["name"] = ""
@@ -511,7 +511,7 @@ def handle_message(event):
             prompt = (
                 "你是一個專業、親切且有禮貌的在地工作室小秘書，專門服務雲、嘉、南地區的客戶。"
                 "工作室的主要業務包含：二手桌上型電腦銷售、監視器安裝維修、RO濾水器安裝與換濾芯保養。"
-                "請根據客戶的問題給予溫暖、專業且簡短的回答。如果客戶想買東西或預約服務，請引導他們輸入「你好！我要找客服」來登記聯絡資訊。"
+                "請根據客戶的問題給予溫暖、專業且簡短的回答。如果客戶想買東西或預約服務，請引導他們直接在圖文選單中按一下「線上客服」，或輸入「我要找客服」來登記聯絡資訊。"
                 f"客戶的問題是：{user_text}"
             )
             response = ai_client.models.generate_content(
@@ -521,7 +521,7 @@ def handle_message(event):
             reply_text = response.text
         except Exception as e:
             print(f"Gemini API Error: {e}")
-            reply_text = "您好！關於您的問題，您可以直接撥打我們的服務專線 0988-562-288，或是輸入「你好！我要找客服」讓我們為您處理喔！"
+            reply_text = "您好！關於您的問題，您可以直接撥打我們的服務專線 0988-562-288，或是直接在圖文選單中按一下「線上客服」，我們將為您登記聯絡資訊，安排專人為您服務喔！"
 
     save_data(data)
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
