@@ -420,17 +420,6 @@ def notify_admin(order):
 # ==========================================
 # LINE Bot 接收與 Gemini AI 智慧回覆路由
 # ==========================================
-@app.route("/callback", methods=['POST'])
-def callback():
-    signature = request.headers['X-Line-Signature']
-    body = request.get_data(as_text=True)
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        abort(400)
-    return 'OK'
-
-
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_text = event.message.text.strip()
@@ -444,37 +433,48 @@ def handle_message(event):
 
     user_state = data["users"][user_id]
 
+    # 取消或中斷登記的通用關鍵字（只要在填寫過程中輸入就會觸發）
+    cancel_keywords = ["不要了", "先不要", "取消", "不用了", "改天", "暫時不要", "算了"]
+
     # 1. 偵測是否想找真人客服
     if any(keyword in user_text for keyword in ["真人", "老闆", "人工", "電話", "專人"]):
         reply_text = "📞 您好！您可以直接撥打建安工作室服務專線：0988-562-288，將由專人為您服務！或者您也可以直接在圖文選單中按一下「線上客服」，我們將為您登記聯絡資訊，安排專人為您服務喔！"
 
-    # 2. 觸發機器人登記流程（支援多種常見關鍵字，不包含單獨的「你好」）
+    # 2. 如果使用者正在登記中，但突然輸入取消關鍵字
+    elif user_state["step"] in ["get_name", "get_phone", "get_address"] and any(kw in user_text for kw in cancel_keywords):
+        user_state["step"] = "idle"
+        user_state["name"] = ""
+        user_state["phone"] = ""
+        user_state["address"] = ""
+        reply_text = "好的，已為您取消此次登記。如果有需要隨時可以點選圖文選單中的「線上客服」或輸入「我要找客服」喔！"
+
+    # 3. 觸發機器人登記流程（支援多種常見關鍵字，不包含單獨的「你好」）
     elif any(keyword in user_text for keyword in ["你好我要找客服", "你好！我要找客服", "我要找客服", "找客服"]):
-        reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n請先輸入您的【聯絡人姓名】："
+        reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n請先輸入您的【聯絡人姓名】：\n（若要取消請輸入「不要了」）"
         user_state["step"] = "get_name"
         user_state["name"] = ""
         user_state["phone"] = ""
         user_state["address"] = ""
 
-    # 3. 登記步驟：姓名
+    # 4. 登記步驟：姓名
     elif user_state["step"] == "get_name":
         user_state["name"] = user_text
-        reply_text = f"收到，您的姓名是【{user_text}】。\n接下來，請輸入您的【連絡電話】："
+        reply_text = f"收到，您的姓名是【{user_text}】。\n接下來，請輸入您的【連絡電話】：\n（若要取消請輸入「不要了」）"
         user_state["step"] = "get_phone"
 
-    # 4. 登記步驟：電話
+    # 5. 登記步驟：電話
     elif user_state["step"] == "get_phone":
         if not any(char.isdigit() for char in user_text):
-            reply_text = "⚠️ 電話號碼格式怪怪的喔！請輸入正確的【連絡電話】："
+            reply_text = "⚠️ 電話號碼格式怪怪的喔！請輸入正確的【連絡電話】：\n（若要取消請輸入「不要了」）"
         else:
             user_state["phone"] = user_text
-            reply_text = "太好了！最後，請輸入您的【收件/服務地址】："
+            reply_text = "太好了！最後，請輸入您的【收件/服務地址】：\n（若要取消請輸入「不要了」）"
             user_state["step"] = "get_address"
 
-    # 5. 登記步驟：地址並建立訂單
+    # 6. 登記步驟：地址並建立訂單
     elif user_state["step"] == "get_address":
         if len(user_text) < 3 or user_text in ["為什麼", "不知道", "測試"]:
-            reply_text = "⚠️ 請輸入詳細的【收件/服務地址】（包含鄉鎮市區與路名），以便我們安排服務："
+            reply_text = "⚠️ 請輸入詳細的【收件/服務地址】（包含鄉鎮市區與路名），以便我們安排服務：\n（若要取消請輸入「不要了」）"
         else:
             user_state["address"] = user_text
             user_state["step"] = "completed"
@@ -505,7 +505,7 @@ def handle_message(event):
             reply_text = f"✅ 訂單已成功建立！\n------------------------------\n姓名：{user_state['name']}\n電話：{user_state['phone']}\n地址：{user_state['address']}\n訂單編號：{order_id_str}\n------------------------------\n我們將盡快與您聯絡！"
             user_state["step"] = "idle"
 
-    # 6. 一般閒聊或問問題交給 Gemini AI (已更新為最新 gemini-3.6-flash 模型)
+    # 7. 一般閒聊或問問題交給 Gemini AI
     else:
         try:
             prompt = (
