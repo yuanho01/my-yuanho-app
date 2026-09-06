@@ -446,10 +446,10 @@ def handle_message(event):
 
     # 1. 偵測是否想找真人客服
     if any(keyword in user_text for keyword in ["真人", "老闆", "人工", "電話", "專人"]):
-        reply_text = "📞 您好！您可以直接撥打建安工作室服務專線：0988-562-288，將由專人為您服務！或者您也可以輸入「你好！我要找客服」線上留資料。"
+        reply_text = "📞 您好！您可以直接撥打建安工作室服務專線：0988-562-288，將由專人為您服務！或者您也可以輸入「找客服」線上留資料。"
 
-    # 2. 觸發機器人登記流程
-    elif "你好！我要找客服" in user_text:
+    # 2. 觸發機器人登記流程（擴增多種常見關鍵字）
+    elif any(keyword in user_text for keyword in ["你好我要找客服", "我要找客服", "找客服", "有客服嗎"]):
         reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n請先輸入您的【聯絡人姓名】："
         user_state["step"] = "get_name"
         user_state["name"] = ""
@@ -505,13 +505,13 @@ def handle_message(event):
             reply_text = f"✅ 訂單已成功建立！\n------------------------------\n姓名：{user_state['name']}\n電話：{user_state['phone']}\n地址：{user_state['address']}\n訂單編號：{order_id_str}\n------------------------------\n我們將盡快與您聯絡！"
             user_state["step"] = "idle"
 
-    # 6. 一般閒聊或問問題交給 Gemini AI (已更新為最新 gemini-3.6-flash 模型)
+    # 6. 一般閒聊或問問題交給 Gemini AI (含額度滿載時的溫馨提示)
     else:
         try:
             prompt = (
                 "你是一個專業、親切且有禮貌的在地工作室小秘書，專門服務雲、嘉、南地區的客戶。"
                 "工作室的主要業務包含：二手桌上型電腦銷售、監視器安裝維修、RO濾水器安裝與換濾芯保養。"
-                "請根據客戶的問題給予溫暖、專業且簡短的回答。如果客戶想買東西或預約服務，請引導他們輸入「你好！我要找客服」來登記聯絡資訊。"
+                "請根據客戶的問題給予溫暖、專業且簡短的回答。如果客戶想買東西或預約服務，請引導他們輸入「找客服」來登記聯絡資訊。"
                 f"客戶的問題是：{user_text}"
             )
             response = ai_client.models.generate_content(
@@ -520,8 +520,8 @@ def handle_message(event):
             )
             reply_text = response.text
         except Exception as e:
-            print(f"Gemini API Error: {e}")
-            reply_text = "您好！關於您的問題，您可以直接撥打我們的服務專線 0988-562-288，或是輸入「你好！我要找客服」讓我們為您處理喔！"
+            print(f"Gemini API 額度已滿: {e}")
+            reply_text = "小秘書目前正在忙線中！如果您想預約服務或買東西，可以直接輸入「找客服」來登記聯絡資訊，或者撥打專線 0988-562-288，我們會盡快與您聯絡喔！"
 
     save_data(data)
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
