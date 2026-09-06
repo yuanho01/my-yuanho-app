@@ -413,6 +413,88 @@ def delete_service(item_id):
     handle_delete_item('services', item_id)
     return redirect(url_for('admin'))
 
+from flask import abort
+from linebot import LineBotApi, WebhookHandler
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.exceptions import InvalidSignatureError
+
+LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "你的 LINE Access Token")
+LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET", "你的 LINE Channel Secret")
+
+line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+handler = WebhookHandler(LINE_CHANNEL_SECRET)
+
+@app.route("/callback", methods=['POST'])
+def callback():
+    signature = request.headers['X-Line-Signature']
+    body = request.get_data(as_text=True)
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+    return 'OK'
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    user_text = event.message.text.strip()
+    user_id = event.source.user_id
+
+    data = load_data()
+    if "users" not in data:
+        data["users"] = {}
+    if user_id not in data["users"]:
+        data["users"][user_id] = {"step": "idle", "name": "", "phone": "", "address": ""}
+
+    user_state = data["users"][user_id]
+
+    # 當好友點擊「線上客服」 → LINE 傳來「你好！我要找客服」
+    if "你好！我要找客服" in user_text:
+        reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n如果需要二手桌上型電腦、監視器安裝維修、RO濾水器安裝維修或換濾芯保養，請在聊天這裡輸入聯絡人姓名。"
+        user_state["step"] = "get_name"
+
+    elif user_state["step"] == "get_name":
+        user_state["name"] = user_text
+        reply_text = "好的，請輸入您的電話："
+        user_state["step"] = "get_phone"
+
+    elif user_state["step"] == "get_phone":
+        user_state["phone"] = user_text
+        reply_text = "最後，請輸入您的地址："
+        user_state["step"] = "get_address"
+
+    elif user_state["step"] == "get_address":
+        user_state["address"] = user_text
+        user_state["step"] = "completed"
+
+        # 建立訂單
+        order_id_str = str(int(time.time()))
+        order_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        new_order = {
+            "order_id": order_id_str,
+            "username": user_id,
+            "name": user_state["name"],
+            "phone": user_state["phone"],
+            "address": user_state["address"],
+            "items": [],
+            "subtotal": 0,
+            "final_total": 0,
+            "is_member_discount": False,
+            "time": order_time_str,
+            "status": "processing"
+        }
+        if "orders" not in data:
+            data["orders"] = []
+        data["orders"].insert(0, new_order)
+        save_data(data)
+
+        reply_text = f"✅ 已建立訂單！\n姓名：{user_state['name']}\n電話：{user_state['phone']}\n地址：{user_state['address']}\n訂單編號：{order_id_str}"
+
+    else:
+        reply_text = "感謝您的訊息，我們會盡快回覆！"
+
+    save_data(data)
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
