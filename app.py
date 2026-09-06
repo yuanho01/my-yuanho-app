@@ -420,20 +420,6 @@ def notify_admin(order):
 import random  # 記得確認檔案最上方有無匯入 random 模組，沒有的話補上一行即可
 
 
-# ==========================================
-# LINE Bot 接收與 Gemini AI 智慧回覆路由
-# ==========================================
-@app.route("/callback", methods=['POST'])
-def callback():
-    signature = request.headers['X-Line-Signature']
-    body = request.get_data(as_text=True)
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        abort(400)
-    return 'OK'
-
-
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_text = event.message.text.strip()
@@ -447,13 +433,26 @@ def handle_message(event):
 
     user_state = data["users"][user_id]
 
+    # 0. 隨時允許使用者透過輸入「取消」來停止登記流程
+    if user_text in ["取消", "退出", "算了", "返回", "stop"]:
+        user_state["step"] = "idle"
+        user_state["name"] = ""
+        user_state["phone"] = ""
+        user_state["address"] = ""
+        save_data(data)
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="❌ 已為您取消此次客服登記。若有需要隨時可以再輸入「找客服」喔！")
+        )
+        return
+
     # 1. 偵測是否想找真人客服
     if any(keyword in user_text for keyword in ["真人", "老闆", "人工", "電話", "專人"]):
         reply_text = "📞 您好！您可以直接撥打建安工作室服務專線：0988-562-288，將由專人為您服務！或者您也可以輸入「找客服」線上留資料。"
 
-    # 2. 觸發機器人登記流程
+    # 2. 觸發機器人登記流程（已加上隨時可取消的提示）
     elif any(keyword in user_text for keyword in ["你好我要找客服", "我要找客服", "找客服", "有客服嗎"]):
-        reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n請先輸入您的【聯絡人姓名】："
+        reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n（💡 貼心提醒：登記過程中隨時輸入「取消」即可停止唷！）\n\n請先輸入您的【聯絡人姓名】："
         user_state["step"] = "get_name"
         user_state["name"] = ""
         user_state["phone"] = ""
@@ -467,7 +466,7 @@ def handle_message(event):
         # 檢查輸入的第一個字是否在百家姓中，且長度至少 2 個字
         first_char = user_text[0] if len(user_text) > 0 else ""
         if len(user_text) < 2 or first_char not in common_surnames:
-            reply_text = "⚠️ 感覺名字格式不太對喔！請輸入您的真實中文姓名（例如：陳大明）："
+            reply_text = "⚠️ 感覺名字格式不太對喔！請輸入您的真實中文姓名（例如：陳大明），若想退出請輸入「取消」："
         else:
             user_state["name"] = user_text
             reply_text = f"收到，您的姓名是【{user_text}】。\n接下來，請輸入您的【連絡電話】（需為 09 開頭的 10 碼數字）："
@@ -477,7 +476,7 @@ def handle_message(event):
     elif user_state["step"] == "get_phone":
         cleaned_phone = "".join(filter(str.isdigit, user_text))  # 過濾掉非數字字元（如空白或橫槓）
         if len(cleaned_phone) != 10 or not cleaned_phone.startswith("09"):
-            reply_text = "⚠️ 電話格式有誤！請輸入正確的手機號碼（例如：0912345678）："
+            reply_text = "⚠️ 電話格式有誤！請輸入正確的手機號碼（例如：0912345678），若想退出請輸入「取消」："
         else:
             user_state["phone"] = cleaned_phone
             reply_text = "太好了！最後，請輸入您的【收件/服務地址】（請包含鄉鎮市區與路名）："
@@ -529,20 +528,26 @@ def handle_message(event):
                 f"客戶的問題是：{user_text}"
             )
             response = ai_client.models.generate_content(
-                model='gemini-3.6-flash',
+                model='gemini-2.5-flash',
                 contents=prompt
             )
             reply_text = response.text
         except Exception as e:
             print(f"Gemini API 額度已滿: {e}")
 
-            # 五種隨機忙線回覆文案
+            # 十種隨機忙線回覆文案（包含專業與輕鬆調皮語氣）
             busy_messages = [
                 "小秘書目前正在忙線中！如果您想預約服務或買東西，可以直接輸入「找客服」來登記聯絡資訊，或者撥打專線 0988-562-288，我們會盡快與您聯絡喔！",
                 "哎呀！系統小幫手現在有點塞車忙不過來了。若有急需服務，歡迎直接輸入「找客服」留資料，或撥打專線 0988-562-288 找建安老闆喔！",
                 "不好意思，AI 正在休息中！需要二手電腦、監視器或濾水器服務的朋友，請直接輸入「找客服」快速登記，我們會手動為您處理！",
                 "小秘書正在全力服務其他客戶中！您可以直接打專線 0988-562-288，或輸入「找客服」留下您的聯絡方式，我們看到會立刻回電！",
-                "系統目前忙碌中，暫時無法自動對話。別擔心！直接輸入「找客服」就能直接進入登記流程，專人會盡快為您安排服務喔！"
+                "系統目前忙碌中，暫時無法自動對話。別擔心！直接輸入「找客服」就能直接進入登記流程，專人會盡快為您安排服務喔！",
+                # 👇 以下為新增的 5 種輕鬆調皮語氣
+                "哎唷威呀！小秘書的咖啡剛剛打翻了，手忙腳亂中～😅 如果有急事找建安老闆，直接打 0988-562-288 或輸入「找客服」最快喔！",
+                "報告老闆！找我的人太多，AI 大腦快燒掉了🔥 休息一下下先～您可以直接輸入「找客服」留資料，我們馬上派專人去處理！",
+                "哈哈，被您抓到了！小秘書剛剛分心去偷看貓咪吃飯了 🐾 您好呀！有需要電腦或濾水器服務嗎？輸入「找客服」快速幫您登記！",
+                "糟糕，電波好像被雲嘉南的美食香氣干擾了～信號微弱中 🍲😋 肚子餓歸肚子餓，正事不能忘！有需要服務請輸入「找客服」喔！",
+                "別急別急～小秘書正在跑步幫您找老闆！🏃‍♂️ 趕快先輸入「找客服」登記您的需求，老闆看到就會光速飛奔處理囉！"
             ]
             reply_text = random.choice(busy_messages)
 
