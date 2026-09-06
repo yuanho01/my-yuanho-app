@@ -185,6 +185,7 @@ def checkout():
     data['orders'].insert(0, new_order)
 
     save_data(data)
+    notify_admin(new_order)
     session.pop('cart', None)
 
     flash('訂單已成功送出！我們將盡快與您聯繫。', 'success')
