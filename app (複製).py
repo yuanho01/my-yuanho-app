@@ -185,6 +185,7 @@ def checkout():
     data['orders'].insert(0, new_order)
 
     save_data(data)
+    notify_admin(new_order)
     session.pop('cart', None)
 
     flash('訂單已成功送出！我們將盡快與您聯繫。', 'success')
@@ -393,6 +394,30 @@ def delete_service(item_id):
 
 
 # ==========================================
+# 管理員新訂單自動推播小工具
+# ==========================================
+def notify_admin(order):
+    admin_id = os.environ.get("ADMIN_LINE_USER_ID")
+    if not admin_id:
+        return
+
+    msg = (
+        f"🚨 【新訂單通知】\n"
+        f"------------------------------\n"
+        f"訂單編號：{order.get('order_id')}\n"
+        f"客戶姓名：{order.get('name')}\n"
+        f"連絡電話：{order.get('phone')}\n"
+        f"服務地址：{order.get('address')}\n"
+        f"------------------------------\n"
+        f"請盡快為客戶安排服務或出貨！"
+    )
+    try:
+        line_bot_api.push_message(admin_id, TextSendMessage(text=msg))
+    except Exception as e:
+        print(f"推播失敗: {e}")
+
+
+# ==========================================
 # LINE Bot 接收與 Gemini AI 智慧回覆路由
 # ==========================================
 @app.route("/callback", methods=['POST'])
@@ -419,46 +444,68 @@ def handle_message(event):
 
     user_state = data["users"][user_id]
 
-    if "你好！我要找客服" in user_text:
-        reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n如果需要二手桌上型電腦、監視器安裝維修、RO濾水器安裝維修或換濾芯保養，請先輸入您的【聯絡人姓名】："
-        user_state["step"] = "get_name"
+    # 1. 偵測是否想找真人客服
+    if any(keyword in user_text for keyword in ["真人", "老闆", "人工", "電話", "專人"]):
+        reply_text = "📞 您好！您可以直接撥打建安工作室服務專線：0988-562-288，將由專人為您服務！或者您也可以輸入「你好！我要找客服」線上留資料。"
 
+    # 2. 觸發機器人登記流程
+    elif "你好！我要找客服" in user_text:
+        reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n請先輸入您的【聯絡人姓名】："
+        user_state["step"] = "get_name"
+        user_state["name"] = ""
+        user_state["phone"] = ""
+        user_state["address"] = ""
+
+    # 3. 登記步驟：姓名
     elif user_state["step"] == "get_name":
         user_state["name"] = user_text
-        reply_text = "好的！請輸入您的【連絡電話】："
+        reply_text = f"收到，您的姓名是【{user_text}】。\n接下來，請輸入您的【連絡電話】："
         user_state["step"] = "get_phone"
 
+    # 4. 登記步驟：電話
     elif user_state["step"] == "get_phone":
-        user_state["phone"] = user_text
-        reply_text = "最後，請輸入您的【收件/服務地址】："
-        user_state["step"] = "get_address"
+        if not any(char.isdigit() for char in user_text):
+            reply_text = "⚠️ 電話號碼格式怪怪的喔！請輸入正確的【連絡電話】："
+        else:
+            user_state["phone"] = user_text
+            reply_text = "太好了！最後，請輸入您的【收件/服務地址】："
+            user_state["step"] = "get_address"
 
+    # 5. 登記步驟：地址並建立訂單
     elif user_state["step"] == "get_address":
-        user_state["address"] = user_text
-        user_state["step"] = "completed"
+        if len(user_text) < 3 or user_text in ["為什麼", "不知道", "測試"]:
+            reply_text = "⚠️ 請輸入詳細的【收件/服務地址】（包含鄉鎮市區與路名），以便我們安排服務："
+        else:
+            user_state["address"] = user_text
+            user_state["step"] = "completed"
 
-        order_id_str = str(int(time.time()))
-        order_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        new_order = {
-            "order_id": order_id_str,
-            "username": user_id,
-            "name": user_state["name"],
-            "phone": user_state["phone"],
-            "address": user_state["address"],
-            "items": [],
-            "subtotal": 0,
-            "final_total": 0,
-            "is_member_discount": False,
-            "time": order_time_str,
-            "status": "processing"
-        }
-        if "orders" not in data:
-            data["orders"] = []
-        data["orders"].insert(0, new_order)
-        save_data(data)
+            order_id_str = str(int(time.time()))
+            order_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            new_order = {
+                "order_id": order_id_str,
+                "username": user_id,
+                "name": user_state["name"],
+                "phone": user_state["phone"],
+                "address": user_state["address"],
+                "items": [],
+                "subtotal": 0,
+                "final_total": 0,
+                "is_member_discount": False,
+                "time": order_time_str,
+                "status": "processing"
+            }
+            if "orders" not in data:
+                data["orders"] = []
+            data["orders"].insert(0, new_order)
+            save_data(data)
 
-        reply_text = f"✅ 訂單已成功建立！\n------------------------------\n姓名：{user_state['name']}\n電話：{user_state['phone']}\n地址：{user_state['address']}\n訂單編號：{order_id_str}\n------------------------------\n我們將盡快與您聯絡！"
+            # 🚀 觸發管理員自動推播通知
+            notify_admin(new_order)
 
+            reply_text = f"✅ 訂單已成功建立！\n------------------------------\n姓名：{user_state['name']}\n電話：{user_state['phone']}\n地址：{user_state['address']}\n訂單編號：{order_id_str}\n------------------------------\n我們將盡快與您聯絡！"
+            user_state["step"] = "idle"
+
+    # 6. 一般閒聊或問問題交給 Gemini AI (已更新為最新 gemini-3.6-flash 模型)
     else:
         try:
             prompt = (
@@ -468,16 +515,16 @@ def handle_message(event):
                 f"客戶的問題是：{user_text}"
             )
             response = ai_client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.6-flash',
                 contents=prompt
             )
             reply_text = response.text
         except Exception as e:
-            reply_text = "感謝您的詢問！建安工作室會盡快為您解答，若需預約服務請輸入「你好！我要找客服」。"
+            print(f"Gemini API Error: {e}")
+            reply_text = "您好！關於您的問題，您可以直接撥打我們的服務專線 0988-562-288，或是輸入「你好！我要找客服」讓我們為您處理喔！"
 
     save_data(data)
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
