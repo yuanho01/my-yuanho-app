@@ -393,6 +393,30 @@ def delete_service(item_id):
 
 
 # ==========================================
+# 管理員新訂單自動推播小工具
+# ==========================================
+def notify_admin(order):
+    admin_id = os.environ.get("ADMIN_LINE_USER_ID")
+    if not admin_id:
+        return
+
+    msg = (
+        f"🚨 【新訂單通知】\n"
+        f"------------------------------\n"
+        f"訂單編號：{order.get('order_id')}\n"
+        f"客戶姓名：{order.get('name')}\n"
+        f"連絡電話：{order.get('phone')}\n"
+        f"服務地址：{order.get('address')}\n"
+        f"------------------------------\n"
+        f"請盡快為客戶安排服務或出貨！"
+    )
+    try:
+        line_bot_api.push_message(admin_id, TextSendMessage(text=msg))
+    except Exception as e:
+        print(f"推播失敗: {e}")
+
+
+# ==========================================
 # LINE Bot 接收與 Gemini AI 智慧回覆路由
 # ==========================================
 @app.route("/callback", methods=['POST'])
@@ -474,10 +498,13 @@ def handle_message(event):
             data["orders"].insert(0, new_order)
             save_data(data)
 
+            # 🚀 觸發管理員自動推播通知
+            notify_admin(new_order)
+
             reply_text = f"✅ 訂單已成功建立！\n------------------------------\n姓名：{user_state['name']}\n電話：{user_state['phone']}\n地址：{user_state['address']}\n訂單編號：{order_id_str}\n------------------------------\n我們將盡快與您聯絡！"
             user_state["step"] = "idle"
 
-    # 6. 一般閒聊或問問題交給 Gemini AI
+    # 6. 一般閒聊或問問題交給 Gemini AI (已更新為最新 gemini-3.6-flash 模型)
     else:
         try:
             prompt = (
@@ -487,7 +514,7 @@ def handle_message(event):
                 f"客戶的問題是：{user_text}"
             )
             response = ai_client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.6-flash',
                 contents=prompt
             )
             reply_text = response.text
@@ -497,7 +524,6 @@ def handle_message(event):
 
     save_data(data)
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
