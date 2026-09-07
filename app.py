@@ -396,7 +396,43 @@ def delete_service(item_id):
 # ==========================================
 # 管理員新訂單自動推播小工具
 # ==========================================
-import random  # 確保檔案上方有引入 random
+def notify_admin(order):
+    admin_id = os.environ.get("ADMIN_LINE_USER_ID")
+    if not admin_id:
+        return
+
+    msg = (
+        f"🚨 【新訂單通知】\n"
+        f"------------------------------\n"
+        f"訂單編號：{order.get('order_id')}\n"
+        f"客戶姓名：{order.get('name')}\n"
+        f"連絡電話：{order.get('phone')}\n"
+        f"服務地址：{order.get('address')}\n"
+        f"------------------------------\n"
+        f"請盡快為客戶安排服務或出貨！"
+    )
+    try:
+        line_bot_api.push_message(admin_id, TextSendMessage(text=msg))
+    except Exception as e:
+        print(f"推播失敗: {e}")
+
+
+import random  # 記得確認檔案最上方有無匯入 random 模組，沒有的話補上一行即可
+
+
+# ==========================================
+# LINE Bot 接收與 Gemini AI 智慧回覆路由
+# ==========================================
+@app.route("/callback", methods=['POST'])
+def callback():
+    signature = request.headers['X-Line-Signature']
+    body = request.get_data(as_text=True)
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+    return 'OK'
+
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -411,7 +447,9 @@ def handle_message(event):
 
     user_state = data["users"][user_id]
 
-    # 0. 隨時允許使用者透過輸入「取消」來停止登記流程
+    # ==========================================
+    # 0. 隨時取消登記功能（新增）
+    # ==========================================
     if user_text in ["取消", "退出", "算了", "返回", "stop"]:
         user_state["step"] = "idle"
         user_state["name"] = ""
@@ -428,9 +466,9 @@ def handle_message(event):
     if any(keyword in user_text for keyword in ["真人", "老闆", "人工", "電話", "專人"]):
         reply_text = "📞 您好！您可以直接撥打建安工作室服務專線：0988-562-288，將由專人為您服務！或者您也可以輸入「找客服」線上留資料。"
 
-    # 2. 觸發機器人登記流程（已加上隨時可取消的提示）
+    # 2. 觸發機器人登記流程（加入取消的貼心提示）
     elif any(keyword in user_text for keyword in ["你好我要找客服", "我要找客服", "找客服", "有客服嗎"]):
-        reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n（💡 貼心提醒：登記過程中隨時輸入「取消」即可停止唷！）\n\n請先輸入您的【聯絡人姓名】："
+        reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n（💡 貼心提醒：登記過程中隨時輸入「取消」即可隨時退出唷！）\n\n請先輸入您的【聯絡人姓名】："
         user_state["step"] = "get_name"
         user_state["name"] = ""
         user_state["phone"] = ""
@@ -438,8 +476,10 @@ def handle_message(event):
 
     # 3. 登記步驟：姓名（加入百家姓初步判斷）
     elif user_state["step"] == "get_name":
+        # 常見的台灣百家姓清單
         common_surnames = "趙錢孫李周吳鄭王馮陳褚衛蔣沈韓楊朱秦尤許何呂施張孔曹嚴華金魏陶姜戚謝鄒喻柏水竇章雲蘇潘葛奚範彭郎魯韋昌馬苗鳳花方俞任袁柳酆鮑史唐費廉岑薛雷賀倪湯滕殷羅畢郝鄔安常樂於時傅皮卞齊康伍余元卜顧孟平黃和穆蕭尹姚邵湛汪祁毛禹狄米貝明臧計伏成戴談宋茅龐熊紀舒屈項祝董梁杜阮藍閔席季麻強賈路婁危江童顏郭梅盛林刁鍾徐邱駱高夏蔡田樊胡凌霍虞萬支柯惲管盧莫經房裘繆干解應宗宣丁贲鄧郁單杭洪包諸左石崔吉鈕龔程嵇邢滑裴陸榮翁荀羊於惠甄魏加封芮羿儲靳汲邴糜松井段富巫烏焦巴弓牧隗山谷車侯宓蓬全郗班仰秋仲伊宮寧仇欒暴甘鈄厲戎祖武符劉姜詹束龍葉幸司韶郜黎蓟薄印宿白懷蒲台從鄂索咸籍賴卓藺屠蒙池喬陰鬱胥能蒼雙聞莘黨翟譚貢勞逄姬申扶堵冉宰酈雍卻璩桑桂濮牛壽通邊扈燕冀郏浦尚農溫別莊晏柴瞿閻充慕連茹習宦艾魚容向古易慎戈廖庾終暨居衡步都耿滿弘匡國文寇祿闕東歐殳沃利蔚越夔隆師鞏厍聶晁勾敖融冷訾辛阚那簡饒空曾毋沙乜養鞠須豐巢關蒯相查後江紅遊竺權逯蓋益桓公萬俟司馬上官歐陽夏侯諸葛聞人東方赫連皇甫尉官澹臺公羊宗政濮陽淳于單于太叔申屠公孫仲孫軒關令司徒司空摯呼延諸葛融琴漆段干百里東郭南門呼延羊舌微生梁丘左丘東門西門商牟佘佴伯南宮墨哈譙笪年愛陽佟第五言福"
 
+        # 檢查輸入的第一個字是否在百家姓中，且長度至少 2 個字
         first_char = user_text[0] if len(user_text) > 0 else ""
         if len(user_text) < 2 or first_char not in common_surnames:
             reply_text = "⚠️ 感覺名字格式不太對喔！請輸入您的真實中文姓名（例如：陳大明），若想退出請輸入「取消」："
@@ -448,9 +488,9 @@ def handle_message(event):
             reply_text = f"收到，您的姓名是【{user_text}】。\n接下來，請輸入您的【連絡電話】（需為 09 開頭的 10 碼數字）："
             user_state["step"] = "get_phone"
 
-    # 4. 登記步驟：電話
+    # 4. 登記步驟：電話（限制必須是數字、10 碼且 09 開頭）
     elif user_state["step"] == "get_phone":
-        cleaned_phone = "".join(filter(str.isdigit, user_text))
+        cleaned_phone = "".join(filter(str.isdigit, user_text))  # 過濾掉非數字字元（如空白或橫槓）
         if len(cleaned_phone) != 10 or not cleaned_phone.startswith("09"):
             reply_text = "⚠️ 電話格式有誤！請輸入正確的手機號碼（例如：0912345678），若想退出請輸入「取消」："
         else:
@@ -458,8 +498,9 @@ def handle_message(event):
             reply_text = "太好了！最後，請輸入您的【收件/服務地址】（請包含鄉鎮市區與路名）："
             user_state["step"] = "get_address"
 
-    # 5. 登記步驟：地址並建立訂單
+    # 5. 登記步驟：地址並建立訂單（加入簡易地址關鍵字防呆）
     elif user_state["step"] == "get_address":
+        # 檢查地址長度是否太短，或是包含無意義字眼
         invalid_words = ["為什麼", "不知道", "測試", "這裡", "不知道", "路過"]
         if len(user_text) < 5 or any(w in user_text for w in invalid_words):
             reply_text = "⚠️ 請輸入詳細的【收件/服務地址】（例如：雲林縣虎尾鎮中正路100號），以便我們安排到府服務："
@@ -487,12 +528,13 @@ def handle_message(event):
             data["orders"].insert(0, new_order)
             save_data(data)
 
+            # 🚀 觸發管理員自動推播通知
             notify_admin(new_order)
 
             reply_text = f"✅ 訂單已成功建立！\n------------------------------\n姓名：{user_state['name']}\n電話：{user_state['phone']}\n地址：{user_state['address']}\n訂單編號：{order_id_str}\n------------------------------\n我們將盡快與您聯絡！"
             user_state["step"] = "idle"
 
-    # 6. 一般閒聊或問問題交給 Gemini AI (含 10 種隨機忙線提示)
+    # 6. 一般閒聊或問問題交給 Gemini AI (含擴充後的 10 種隨機忙線提示)
     else:
         try:
             prompt = (
@@ -502,14 +544,14 @@ def handle_message(event):
                 f"客戶的問題是：{user_text}"
             )
             response = ai_client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.6-flash',
                 contents=prompt
             )
             reply_text = response.text
         except Exception as e:
             print(f"Gemini API 額度已滿: {e}")
 
-            # 10 種隨機忙線回覆文案（含專業與輕鬆調皮語氣）
+            # 擴充為十種隨機忙線回覆文案
             busy_messages = [
                 "小秘書目前正在忙線中！如果您想預約服務或買東西，可以直接輸入「找客服」來登記聯絡資訊，或者撥打專線 0988-562-288，我們會盡快與您聯絡喔！",
                 "哎呀！系統小幫手現在有點塞車忙不過來了。若有急需服務，歡迎直接輸入「找客服」留資料，或撥打專線 0988-562-288 找建安老闆喔！",
@@ -526,5 +568,6 @@ def handle_message(event):
 
     save_data(data)
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
