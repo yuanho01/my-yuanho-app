@@ -64,9 +64,9 @@
         "d0973369969": "Aa014156",
         "": "",
         "Ubaa75b211e6a628edeb3f7c6be82c055": {
-            "step": "get_phone",
+            "step": "get_address",
             "name": "龍仁",
-            "phone": "",
+            "phone": "0973565735",
             "address": ""
         }
     },
