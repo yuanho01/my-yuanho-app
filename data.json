@@ -72,6 +72,26 @@
     },
     "orders": [
         {
+            "order_id": "1788745604",
+            "username": "yuanho01",
+            "name": "陳龍仁2",
+            "phone": "0973565735",
+            "address": "台南新港東100號",
+            "items": [
+                {
+                    "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
+                    "price": 25000,
+                    "quantity": 1,
+                    "total": 25000
+                }
+            ],
+            "subtotal": 25000,
+            "final_total": 22500,
+            "is_member_discount": true,
+            "time": "2026-09-07 01:46:44",
+            "status": "processing"
+        },
+        {
             "order_id": "1788745517",
             "username": "Udf5ee6924620bc596fe3a3273adbc5ea",
             "name": "陳龍仁1",
