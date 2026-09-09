@@ -565,9 +565,29 @@ def handle_message(event):
     save_data(data)
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
 
+# ==========================================
+# 📱 智慧防吵功能：只有早上 8 點到下午 5 點才會發 LINE 報平安
+# ==========================================
 @app.route('/ping')
 def ping():
+    current_time_struct = time.localtime()
+    current_hour = current_time_struct.tm_hour  # 取得目前是幾點 (0-23)
+    
+    current_time_str = time.strftime("%Y-%m-%d %H:%M:%S", current_time_struct)
+    msg = f"[{current_time_str}] 🔔 成功敲門！伺服器回應: OK"
+    
+    try:
+        # 🎯 關鍵修改：判斷小時是否在 8 點到 17 點之間（下午 5 點是 17 點）
+        if 8 <= current_hour < 17:
+            admin_uid = os.environ.get("ADMIN_LINE_USER_ID")
+            if admin_uid:  # 只要 Render 後台有設定這組 ID 就直接發送
+                line_bot_api.push_message(admin_uid, TextSendMessage(text=msg))
+    except Exception:
+        pass
+        
     return 'OK', 200
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
