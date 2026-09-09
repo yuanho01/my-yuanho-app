@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 
 # 引入 LINE Bot 與 Google Gemini AI 所需的工具
 from linebot import LineBotApi, WebhookHandler
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, FollowEvent, TextMessage, TextSendMessage
 from linebot.exceptions import InvalidSignatureError
 from google import genai
 
