@@ -450,7 +450,8 @@ def handle_message(event):
     # ==========================================
     # 0. 隨時取消登記功能（新增）
     # ==========================================
-    if user_text in ["取消", "退出", "算了", "返回", "stop"]:
+        # 關鍵修改：檢查使用者的話裡面有沒有包含任何一個關鍵字
+    if any(keyword in user_text for keyword in ["取消", "退出", "算了", "返回", "stop"]):
         user_state["step"] = "idle"
         user_state["name"] = ""
         user_state["phone"] = ""
@@ -461,6 +462,7 @@ def handle_message(event):
             TextSendMessage(text="❌ 已為您取消此次客服登記。若有需要隨時可以再輸入「找客服」喔！")
         )
         return
+
 
     # 1. 偵測是否想找真人客服
     if any(keyword in user_text for keyword in ["真人", "老闆", "人工", "電話", "專人"]):
