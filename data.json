@@ -64,10 +64,10 @@
         "d0973369969": "Aa014156",
         "": "",
         "Udf5ee6924620bc596fe3a3273adbc5ea": {
-            "step": "get_address",
+            "step": "completed",
             "name": "陳建安",
             "phone": "0988562288",
-            "address": ""
+            "address": "台南市新營區富昌街56巷13號"
         },
         "U6874ce0096fd55dca168a47b2d583e9a": {
             "step": "idle",
@@ -77,6 +77,19 @@
         }
     },
     "orders": [
+        {
+            "order_id": "1789016739",
+            "username": "Udf5ee6924620bc596fe3a3273adbc5ea",
+            "name": "陳建安",
+            "phone": "0988562288",
+            "address": "台南市新營區富昌街56巷13號",
+            "items": [],
+            "subtotal": 0,
+            "final_total": 0,
+            "is_member_discount": false,
+            "time": "2026-09-10 13:05:39",
+            "status": "processing"
+        },
         {
             "order_id": "1788604926",
             "username": "d0973369969",
