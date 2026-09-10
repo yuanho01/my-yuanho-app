@@ -572,7 +572,6 @@ from datetime import datetime, timedelta, timezone
 import os
 import random
 from flask import Flask, abort, request
-# 使用最新 LINE SDK v3 語法，效能更好且不會出錯
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import (
@@ -583,16 +582,63 @@ from linebot.v3.messaging import (
     PushMessageRequest,
     TextMessage,
 )
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
 app = Flask(__name__)
 
-# 從環境變數讀取金鑰與 ID
-CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET', '')
-CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN', '')
-ADMIN_LINE_USER_ID = os.environ.get('ADMIN_LINE_USER_ID', '')
+# 從 Render 環境變數讀取金鑰與 ID
+CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET', '').strip()
+CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN', '').strip()
+ADMIN_LINE_USER_ID = os.environ.get('ADMIN_LINE_USER_ID', '').strip()
 
 handler = WebhookHandler(CHANNEL_SECRET)
+
+# ==========================================
+# 🏠 網站頁面路由（解決圖文選單 404 錯誤）
+# ==========================================
+@app.route('/')
+def home():
+  return """
+    <!DOCTYPE html>
+    <html lang="zh-TW">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>建安工作室 - 專業服務</title>
+        <style>
+            body { font-family: Microsoft JhengHei, sans-serif; padding: 20px; text-align: center; background-color: #f5f5f5; }
+            .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+            h1 { color: #007bff; }
+            p { font-size: 18px; line-height: 1.6; color: #333; }
+            .btn { display: inline-block; margin-top: 15px; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h1>建安工作室</h1>
+            <p><strong>雲嘉南在地到府維修與安裝服務</strong></p>
+            <p>💻 二手電腦買賣與現場檢測維修<br>📹 專業監視器系統規劃安裝<br>💧 RO 逆滲透淨水器裝設與定期濾芯更換</p>
+            <p>📞 服務專線：0988-562-288</p>
+        </div>
+    </body>
+    </html>
+    """, 200
+
+
+# 如果您的圖文選單有指向特定子頁面（例如 /catalog、/shop、/services），可在此擴充
+@app.route('/catalog')
+def catalog():
+  return '<h1>建安工作室 - 產品型錄內容準備中</h1>', 200
+
+
+@app.route('/shop')
+def shop():
+  return '<h1>建安工作室 - 線上賣場內容準備中</h1>', 200
+
+
+@app.route('/services')
+def services():
+  return '<h1>建安工作室 - 技術服務項目內容準備中</h1>', 200
+
 
 # ==========================================
 # 📢 每日輪播廣告庫 (5套文案)
@@ -632,13 +678,12 @@ DAILY_ADS = [
     ),
 ]
 
-# 記錄最後一次群發廣告的日期
 last_broadcast_date = ''
-BROADCAST_TARGET_HOUR = 9  # 早上 9 點發送
+BROADCAST_TARGET_HOUR = 9
 
 
 # ==========================================
-# 📱 每 10 分鐘敲門點：保活給老闆 + 每日一次輪播廣告給所有人
+# 📱 每 10 分鐘敲門點：保活給老闆 + 每日廣播給所有好友
 # ==========================================
 @app.route('/ping')
 def ping():
@@ -655,20 +700,25 @@ def ping():
   with ApiClient(configuration) as api_client:
     line_bot_api = MessagingApi(api_client)
 
-    # 1. 10分鐘保活訊息：只發給老闆個人
-    try:
-      if 8 <= current_hour < 17 and ADMIN_LINE_USER_ID:
-        keep_alive_msg = (
-            f'[{current_time_str}] 🔔 成功敲門！伺服器回應: OK'
-        )
-        push_request = PushMessageRequest(
-            to=ADMIN_LINE_USER_ID, messages=[TextMessage(text=keep_alive_msg)]
-        )
-        line_bot_api.push_message(push_message_request=push_request)
-    except Exception as e:
-      print(f'老闆保活通知發送失敗: {e}')
+    # 保活推播（限定 8~17 點）
+    if 8 <= current_hour < 17:
+      if ADMIN_LINE_USER_ID:
+        try:
+          keep_alive_msg = (
+              f'[{current_time_str}] 🔔 成功敲門！伺服器回應: OK'
+          )
+          push_request = PushMessageRequest(
+              to=ADMIN_LINE_USER_ID,
+              messages=[TextMessage(text=keep_alive_msg)],
+          )
+          line_bot_api.push_message(push_message_request=push_request)
+          print(f'[{current_time_str}] 保活訊息成功推播至老闆 LINE！')
+        except Exception as e:
+          print(f'[{current_time_str}] 保活訊息推播失敗: {e}')
+      else:
+        print('⚠️ ADMIN_LINE_USER_ID 變數未設定！')
 
-    # 2. 每日一次【5選1輪播】廣告：發給所有好友
+    # 每日廣播（早上 9 點過後執行）
     if last_broadcast_date != today_str and current_hour >= BROADCAST_TARGET_HOUR:
       try:
         selected_ad = random.choice(DAILY_ADS)
@@ -678,9 +728,9 @@ def ping():
         line_bot_api.broadcast(broadcast_request=broadcast_request)
 
         last_broadcast_date = today_str
-        print(f'[{current_time_str}] 成功輪播群發廣告給所有好友！')
+        print(f'[{current_time_str}] 成功輪播廣播每日廣告給所有好友！')
       except Exception as e:
-        print(f'每日廣播發送失敗: {e}')
+        print(f'[{current_time_str}] 每日廣播發送失敗: {e}')
 
   return 'OK', 200
 
@@ -700,8 +750,6 @@ def callback():
 
 if __name__ == '__main__':
   app.run(port=5000)
-
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
