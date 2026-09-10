@@ -566,100 +566,140 @@ def handle_message(event):
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
 
 # ==========================================
-# 📢 每日輪播廣告庫 (5套不一樣的文案)
+# 📢 每日輪播廣告庫 (5套不一樣的文案)以及敲門回覆OK
+# ==========================================
+from datetime import datetime, timedelta, timezone
+import os
+import random
+from flask import Flask, abort, request
+# 使用最新 LINE SDK v3 語法，效能更好且不會出錯
+from linebot.v3 import WebhookHandler
+from linebot.v3.exceptions import InvalidSignatureError
+from linebot.v3.messaging import (
+    ApiClient,
+    BroadcastRequest,
+    Configuration,
+    MessagingApi,
+    PushMessageRequest,
+    TextMessage,
+)
+from linebot.v3.webhooks import MessageEvent, TextMessageContent
+
+app = Flask(__name__)
+
+# 從環境變數讀取金鑰與 ID
+CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET', '')
+CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN', '')
+ADMIN_LINE_USER_ID = os.environ.get('ADMIN_LINE_USER_ID', '')
+
+handler = WebhookHandler(CHANNEL_SECRET)
+
+# ==========================================
+# 📢 每日輪播廣告庫 (5套文案)
 # ==========================================
 DAILY_ADS = [
-    # 第一套：綜合親切服務型
     (
-        "【建安工作室】在地服務溫馨提醒 🛠️\n"
-        "專屬服務雲嘉南地區！\n\n"
-        "💻 二手桌上型電腦銷售與現場維修\n"
-        "📹 監視器系統專業安裝規劃\n"
-        "💧 RO 逆滲透淨水器安裝與定期更換濾芯\n\n"
-        "免出門！專人到府服務。需要服務或有任何問題，隨時輸入「找客服」或撥打專線 0988-562-288！"
+        '【建安工作室】在地服務溫馨提醒 🛠️\n'
+        '專屬服務雲嘉南地區！\n\n'
+        '💻 二手桌上型電腦銷售與現場維修\n'
+        '📹 監視器系統專業安裝規劃\n'
+        '💧 RO 逆滲透淨水器安裝與定期更換濾芯\n\n'
+        '免出門！專人到府服務。需要服務或有任何問題，隨時輸入「找客服」或撥打專線'
+        ' 0988-562-288！'
     ),
-    # 第二套：電腦主打型
     (
-        "【建安工作室】電腦卡頓、開不了機嗎？💻\n\n"
-        "不用辛苦搬電腦出門！建安工作室提供「雲嘉南專人到府電腦維修與二手電腦買賣」。\n"
-        "現場檢測、價格透明，舊機換新機更划算！\n\n"
-        "輸入「找客服」留下您的需求，專人第一時間為您服務！"
+        '【建安工作室】電腦卡頓、開不了機嗎？💻\n\n'
+        '不用辛苦搬電腦出門！建安工作室提供「雲嘉南專人到府電腦維修與二手電腦買賣」。\n'
+        '現場檢測、價格透明，舊機換新機更劃算！\n\n'
+        '輸入「找客服」留下您的需求，專人第一時間為您服務！'
     ),
-    # 第三套：RO淨水器保養型
     (
-        "【建安工作室】好水好健康！您的 RO 濾芯換了嗎？💧\n\n"
-        "飲用水品質關乎全家健康，濾芯定期保養才安心。\n"
-        "我們提供專業 RO 淨水器安裝、故障排除與到府更換濾芯服務！\n\n"
-        "歡迎輸入「找客服」隨時預約保養，或撥打專線 0988-562-288 諮詢！"
+        '【建安工作室】好水好健康！您的 RO 濾芯換了嗎？💧\n\n'
+        '飲用水品質關乎全家健康，濾芯定期保養才安心。\n'
+        '我們提供專業 RO 淨水器安裝、故障排除與到府更換濾芯服務！\n\n'
+        '歡迎輸入「找客服」隨時預約保養，或撥打專線 0988-562-288 諮詢！'
     ),
-    # 第四套：居家安全監視器型
     (
-        "【建安工作室】守護家園與店面安全 📹\n\n"
-        "不論是住家、農舍、工廠還是店面，專業監視器系統讓您出門在外手機隨時遠端看護最安心！\n"
-        "免費現場評估規劃，給您最實惠的方案。\n\n"
-        "有安裝或維修需求，歡迎輸入「找客服」登記，將有專人與您聯繫！"
+        '【建安工作室】守護家園與店面安全 📹\n\n'
+        '不論是住家、農舍、工廠還是店面，專業監視器系統讓您出門在外手機隨時遠端看護最安心！\n'
+        '免費現場評估規劃，給您最實惠的方案。\n\n'
+        '有安裝或維修需求，歡迎輸入「找客服」登記，將有專人與您聯繫！'
     ),
-    # 第五套：輕鬆健檢諮詢型
     (
-        "【建安工作室】早安！今天設備運作還順暢嗎？😊\n\n"
-        "建安工作室是在地的好幫手！不論是「二手電腦買賣/維修」、「監視器裝設」還是「淨水器保養」，通通一電話到府服務！\n\n"
-        "有任何小問題都歡迎線上詢問，輸入「找客服」即可快速登記喔！"
+        '【建安工作室】早安！今天設備運作還順暢嗎？😊\n\n'
+        '建安工作室是在地的好幫手！不論是「二手電腦買賣/維修」、「監視器裝設」還是「淨水器保養」，通通一電話到府服務！\n\n'
+        '有任何小問題都歡迎線上詢問，輸入「找客服」即可快速登記喔！'
     ),
 ]
 
 # 記錄最後一次群發廣告的日期
-last_broadcast_date = ""
-
-# 設定每日群發廣告的時間（24小時制，例如 9 代表早上 9 點）
-BROADCAST_TARGET_HOUR = 9
+last_broadcast_date = ''
+BROADCAST_TARGET_HOUR = 9  # 早上 9 點發送
 
 
 # ==========================================
 # 📱 每 10 分鐘敲門點：保活給老闆 + 每日一次輪播廣告給所有人
 # ==========================================
-@app.route("/ping")
+@app.route('/ping')
 def ping():
   global last_broadcast_date
 
-  # 1. 精準取得台灣時間 (UTC+8)
   tz_tw = timezone(timedelta(hours=8))
   tw_now = datetime.now(tz_tw)
+  today_str = tw_now.strftime('%Y-%m-%d')
+  current_hour = tw_now.hour
+  current_time_str = tw_now.strftime('%Y-%m-%d %H:%M:%S')
 
-  today_str = tw_now.strftime("%Y-%m-%d")  # 例如 "2026-09-10"
-  current_hour = tw_now.hour  # 目前小時 (0-23)
-  current_time_str = tw_now.strftime("%Y-%m-%d %H:%M:%S")
+  configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 
-  # ----------------------------------------------------
-  # 【功能 1】每 10 分鐘敲門保活：★ 只發給老闆您一個人 ★
-  # ----------------------------------------------------
-  try:
-    if 8 <= current_hour < 17:  # 早上 8 點到下午 5 點
-      admin_uid = os.environ.get("ADMIN_LINE_USER_ID")
-      if admin_uid:
-        keep_alive_msg = f"[{current_time_str}] 🔔 成功敲門！伺服器回應: OK"
-        line_bot_api.push_message(admin_uid, TextSendMessage(text=keep_alive_msg))
-  except Exception as e:
-    print(f"老闆保活通知發送失敗: {e}")
+  with ApiClient(configuration) as api_client:
+    line_bot_api = MessagingApi(api_client)
 
-  # ----------------------------------------------------
-  # 【功能 2】每日一次【5選1輪播】廣告：★ 發給所有加入的好友 ★
-  # ----------------------------------------------------
-  if last_broadcast_date != today_str and current_hour >= BROADCAST_TARGET_HOUR:
+    # 1. 10分鐘保活訊息：只發給老闆個人
     try:
-      # 🎯 關鍵修改：從 5 個廣告列表中隨機抽取 1 個發送
-      selected_ad = random.choice(DAILY_ADS)
-
-      # 執行廣播群發給所有好友
-      line_bot_api.broadcast(TextSendMessage(text=selected_ad))
-
-      # 標記今天已經發送完畢
-      last_broadcast_date = today_str
-      print(f"[{current_time_str}] 成功輪播群發廣告給所有好友！")
-
+      if 8 <= current_hour < 17 and ADMIN_LINE_USER_ID:
+        keep_alive_msg = (
+            f'[{current_time_str}] 🔔 成功敲門！伺服器回應: OK'
+        )
+        push_request = PushMessageRequest(
+            to=ADMIN_LINE_USER_ID, messages=[TextMessage(text=keep_alive_msg)]
+        )
+        line_bot_api.push_message(push_message_request=push_request)
     except Exception as e:
-      print(f"每日廣播發送失敗: {e}")
+      print(f'老闆保活通知發送失敗: {e}')
 
-  return "OK", 200
+    # 2. 每日一次【5選1輪播】廣告：發給所有好友
+    if last_broadcast_date != today_str and current_hour >= BROADCAST_TARGET_HOUR:
+      try:
+        selected_ad = random.choice(DAILY_ADS)
+        broadcast_request = BroadcastRequest(
+            messages=[TextMessage(text=selected_ad)]
+        )
+        line_bot_api.broadcast(broadcast_request=broadcast_request)
+
+        last_broadcast_date = today_str
+        print(f'[{current_time_str}] 成功輪播群發廣告給所有好友！')
+      except Exception as e:
+        print(f'每日廣播發送失敗: {e}')
+
+  return 'OK', 200
+
+
+@app.route('/callback', methods=['POST'])
+def callback():
+  signature = request.headers.get('X-Line-Signature', '')
+  body = request.get_data(as_text=True)
+
+  try:
+    handler.handle(body, signature)
+  except InvalidSignatureError:
+    abort(400)
+
+  return 'OK'
+
+
+if __name__ == '__main__':
+  app.run(port=5000)
 
 
 
