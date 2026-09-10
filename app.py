@@ -421,335 +421,336 @@ import random  # 記得確認檔案最上方有無匯入 random 模組，沒有�
 
 
 # ==========================================
+
 # LINE Bot 接收與 Gemini AI 智慧回覆路由
+
 # ==========================================
+
 @app.route("/callback", methods=['POST'])
+
 def callback():
+
     signature = request.headers['X-Line-Signature']
+
     body = request.get_data(as_text=True)
+
     try:
+
         handler.handle(body, signature)
+
     except InvalidSignatureError:
+
         abort(400)
+
     return 'OK'
 
 
+
+
+
 @handler.add(MessageEvent, message=TextMessage)
+
 def handle_message(event):
+
     user_text = event.message.text.strip()
+
     user_id = event.source.user_id
 
+
+
     data = load_data()
+
     if "users" not in data:
+
         data["users"] = {}
+
     if user_id not in data["users"]:
+
         data["users"][user_id] = {"step": "idle", "name": "", "phone": "", "address": ""}
+
+
 
     user_state = data["users"][user_id]
 
+
+
     # ==========================================
+
     # 0. 隨時取消登記功能（新增）
+
     # ==========================================
+
         # 關鍵修改：檢查使用者的話裡面有沒有包含任何一個關鍵字
+
     if any(keyword in user_text for keyword in ["取消", "退出", "算了", "返回", "stop"]):
+
         user_state["step"] = "idle"
+
         user_state["name"] = ""
+
         user_state["phone"] = ""
+
         user_state["address"] = ""
+
         save_data(data)
+
         line_bot_api.reply_message(
+
             event.reply_token,
+
             TextSendMessage(text="❌ 已為您取消此次客服登記。若有需要隨時可以再輸入「找客服」喔！")
+
         )
+
         return
 
 
+
+
+
     # 1. 偵測是否想找真人客服
+
     if any(keyword in user_text for keyword in ["真人", "老闆", "人工", "電話", "專人"]):
+
         reply_text = "📞 您好！您可以直接撥打建安工作室服務專線：0988-562-288，將由專人為您服務！或者您也可以輸入「找客服」線上留資料。"
 
+
+
     # 2. 觸發機器人登記流程（加入取消的貼心提示）
+
     elif any(keyword in user_text for keyword in ["你好我要找客服", "我要找客服", "找客服", "有客服嗎"]):
+
         reply_text = "您好！我是建安工作室的小秘書客服，在這裡為您服務。\n（💡 貼心提醒：登記過程中隨時輸入「取消」即可隨時退出唷！）\n\n請先輸入您的【聯絡人姓名】："
+
         user_state["step"] = "get_name"
+
         user_state["name"] = ""
+
         user_state["phone"] = ""
+
         user_state["address"] = ""
 
+
+
     # 3. 登記步驟：姓名（加入百家姓初步判斷）
+
     elif user_state["step"] == "get_name":
+
         common_surnames = "趙錢孫李周吳鄭王馮陳褚衛蔣沈韓楊朱秦尤許何呂施張孔曹嚴華金魏陶姜戚謝鄒喻柏水竇章雲蘇潘葛奚範彭郎魯韋昌馬苗鳳花方俞任袁柳酆鮑史唐費廉岑薛雷賀倪湯滕殷羅畢郝鄔安常樂於時傅皮卞齊康伍余元卜顧孟平黃和穆蕭尹姚邵湛汪祁毛禹狄米貝明臧計伏成戴談宋茅龐熊紀舒屈項祝董梁杜阮藍閔席季麻強賈路婁危江童顏郭梅盛林刁鍾徐邱駱高夏蔡田樊胡凌霍虞萬支柯惲管盧莫經房裘繆干解應宗宣丁贲鄧郁單杭洪包諸左石崔吉鈕龔程嵇邢滑裴陸榮翁荀羊於惠甄魏加封芮羿儲靳汲邴糜松井段富巫烏焦巴弓牧隗山谷車侯宓蓬全郗班仰秋仲伊宮寧仇欒暴甘鈄厲戎祖武符劉姜詹束龍葉幸司韶郜黎蓟薄印宿白懷蒲台從鄂索咸籍賴卓藺屠蒙池喬陰鬱胥能蒼雙聞莘黨翟譚貢勞逄姬申扶堵冉宰酈雍卻璩桑桂濮牛壽通邊扈燕冀郏浦尚農溫別莊晏柴瞿閻充慕連茹習宦艾魚容向古易慎戈廖庾終暨居衡步都耿滿弘匡國文寇祿闕東歐殳沃利蔚越夔隆師鞏厍聶晁勾敖融冷訾辛阚那簡饒空曾毋沙乜養鞠須豐巢關蒯相查後江紅遊竺權逯蓋益桓公萬俟司馬上官歐陽夏侯諸葛聞人東方赫連皇甫尉官澹臺公羊宗政濮陽淳于單于太叔申屠公孫仲孫軒關令司徒司空摯呼延諸葛融琴漆段干百里東郭南門呼延羊舌微生梁丘左丘東門西門商牟佘佴伯南宮墨哈譙笪年愛陽佟第五言福"
 
+
+
         first_char = user_text[0] if len(user_text) > 0 else ""
+
         if len(user_text) < 2 or first_char not in common_surnames:
+
             reply_text = "⚠️ 感覺名字格式不太對喔！請輸入您的真實中文姓名（例如：陳大明），若想退出請輸入「取消」："
+
         else:
+
             user_state["name"] = user_text
+
             reply_text = f"收到，您的姓名是【{user_text}】。\n接下來，請輸入您的【連絡電話】（需為 09 開頭的 10 碼數字）："
+
             user_state["step"] = "get_phone"
 
+
+
     # 4. 登記步驟：電話
+
     elif user_state["step"] == "get_phone":
+
         cleaned_phone = "".join(filter(str.isdigit, user_text))
+
         if len(cleaned_phone) != 10 or not cleaned_phone.startswith("09"):
+
             reply_text = "⚠️ 電話格式有誤！請輸入正確的手機號碼（例如：0912345678），若想退出請輸入「取消」："
+
         else:
+
             user_state["phone"] = cleaned_phone
+
             reply_text = "太好了！最後，請輸入您的【收件/服務地址】（請包含鄉鎮市區與路名）："
+
             user_state["step"] = "get_address"
 
+
+
     # 5. 登記步驟：地址並建立訂單
+
     elif user_state["step"] == "get_address":
+
         invalid_words = ["取消", "不知道", "測試", "這裡", "路過"]
+
         if len(user_text) < 5 or any(w in user_text for w in invalid_words):
+
             reply_text = "⚠️ 請輸入詳細的【收件/服務地址】（例如：雲林縣虎尾鎮中正路100號），以便我們安排到府服務："
+
         else:
+
             user_state["address"] = user_text
+
             user_state["step"] = "completed"
 
+
+
             order_id_str = str(int(time.time()))
+
             order_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
             new_order = {
+
                 "order_id": order_id_str,
+
                 "username": user_id,
+
                 "name": user_state["name"],
+
                 "phone": user_state["phone"],
+
                 "address": user_state["address"],
+
                 "items": [],
+
                 "subtotal": 0,
+
                 "final_total": 0,
+
                 "is_member_discount": False,
+
                 "time": order_time_str,
+
                 "status": "processing"
+
             }
+
             if "orders" not in data:
+
                 data["orders"] = []
+
             data["orders"].insert(0, new_order)
+
             save_data(data)
+
+
 
             notify_admin(new_order)
 
+
+
             reply_text = f"✅ 訂單已成功建立！\n------------------------------\n姓名：{user_state['name']}\n電話：{user_state['phone']}\n地址：{user_state['address']}\n訂單編號：{order_id_str}\n------------------------------\n我們將盡快與您聯絡！"
+
             user_state["step"] = "idle"
 
+
+
     # 6. 一般閒聊或問問題交給 Gemini AI
+
     else:
+
         try:
+
             prompt = (
+
                 "你是一個專業、親切且有禮貌的在地工作室小秘書，專門服務雲、嘉、南地區的客戶。"
+
                 "工作室的主要業務包含：二手桌上型電腦銷售、監視器安裝維修、RO濾水器安裝與換濾芯保養。"
+
                 "請根據客戶的問題給予溫暖、專業且簡短的回答。如果客戶想買東西或預約服務，請引導他們輸入「找客服」來登記聯絡資訊。"
+
                 f"客戶的問題是：{user_text}"
+
             )
+
             response = ai_client.models.generate_content(
+
                 model='gemini-3.6-flash',
+
                 contents=prompt
+
             )
+
             reply_text = response.text
+
         except Exception as e:
+
             print(f"Gemini API 額度已滿: {e}")
+
             busy_messages = [
+
                 "小秘書目前正在忙線中！如果您想預約服務或買東西，可以直接輸入「找客服」來登記聯絡資訊，或者撥打專線 0988-562-288，我們會盡快與您聯絡喔！",
+
                 "哎呀！系統小幫手現在有點塞車忙不過來了。若有急需服務，歡迎直接輸入「找客服」留資料，或撥打專線 0988-562-288 找建安老闆喔！",
+
                 "不好意思，AI 正在休息中！需要二手電腦、監視器或濾水器服務的朋友，請直接輸入「找客服」快速登記，我們會手動為您處理！",
+
                 "小秘書正在全力服務其他客戶中！您可以直接打專線 0988-562-288，或輸入「找客服」留下您的聯絡方式，我們看到會立刻回電！",
+
                 "系統目前忙碌中，暫時無法自動對話。別擔心！直接輸入「找客服」就能直接進入登記流程，專人會盡快為您安排服務喔！",
+
                 "哎唷威呀！小秘書的咖啡剛剛打翻了，手忙腳亂中～😅 如果有急事找建安老闆，直接打 0988-562-288 或輸入「找客服」最快喔！",
+
                 "報告老闆！找我的人太多，AI 大腦快燒掉了🔥 休息一下下先～您可以直接輸入「找客服」留資料，我們馬上派專人去處理！",
+
                 "哈哈，被您抓到了！小秘書剛剛分心去偷看貓咪吃飯了 🐾 您好呀！有需要電腦或濾水器服務嗎？輸入「找客服」快速幫您登記！",
+
                 "糟糕，電波好像被雲嘉南的美食香氣干擾了～信號微弱中 🍲😋 肚子餓歸肚子餓，正事不能忘！有需要服務請輸入「找客服」喔！",
+
                 "別急別急～小秘書正在跑步幫您找老闆！🏃‍♂️ 趕快先輸入「找客服」登記您的需求，老闆看到就會光速飛奔處理囉！"
+
             ]
+
             reply_text = random.choice(busy_messages)
 
+
+
     save_data(data)
+
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
 
-# ==========================================
-# 📢 每日輪播廣告庫 (5套不一樣的文案)以及敲門回覆OK
-# ==========================================
-from datetime import datetime, timedelta, timezone
-import os
-import random
-from flask import Flask, abort, request
-from linebot.v3 import WebhookHandler
-from linebot.v3.exceptions import InvalidSignatureError
-from linebot.v3.messaging import (
-    ApiClient,
-    BroadcastRequest,
-    Configuration,
-    MessagingApi,
-    PushMessageRequest,
-    TextMessage,
-)
-
-app = Flask(__name__)
-
-# 從 Render 環境變數讀取金鑰與 ID
-CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET', '').strip()
-CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN', '').strip()
-ADMIN_LINE_USER_ID = os.environ.get('ADMIN_LINE_USER_ID', '').strip()
-
-handler = WebhookHandler(CHANNEL_SECRET)
-
-# ==========================================
-# 🏠 網站頁面路由（解決圖文選單 404 錯誤）
-# ==========================================
-@app.route('/')
-def home():
-  return """
-    <!DOCTYPE html>
-    <html lang="zh-TW">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>建安工作室 - 專業服務</title>
-        <style>
-            body { font-family: Microsoft JhengHei, sans-serif; padding: 20px; text-align: center; background-color: #f5f5f5; }
-            .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-            h1 { color: #007bff; }
-            p { font-size: 18px; line-height: 1.6; color: #333; }
-            .btn { display: inline-block; margin-top: 15px; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; }
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <h1>建安工作室</h1>
-            <p><strong>雲嘉南在地到府維修與安裝服務</strong></p>
-            <p>💻 二手電腦買賣與現場檢測維修<br>📹 專業監視器系統規劃安裝<br>💧 RO 逆滲透淨水器裝設與定期濾芯更換</p>
-            <p>📞 服務專線：0988-562-288</p>
-        </div>
-    </body>
-    </html>
-    """, 200
-
-
-# 如果您的圖文選單有指向特定子頁面（例如 /catalog、/shop、/services），可在此擴充
-@app.route('/catalog')
-def catalog():
-  return '<h1>建安工作室 - 產品型錄內容準備中</h1>', 200
-
-
-@app.route('/shop')
-def shop():
-  return '<h1>建安工作室 - 線上賣場內容準備中</h1>', 200
-
-
-@app.route('/services')
-def services():
-  return '<h1>建安工作室 - 技術服務項目內容準備中</h1>', 200
 
 
 # ==========================================
-# 📢 每日輪播廣告庫 (5套文案)
-# ==========================================
-DAILY_ADS = [
-    (
-        '【建安工作室】在地服務溫馨提醒 🛠️\n'
-        '專屬服務雲嘉南地區！\n\n'
-        '💻 二手桌上型電腦銷售與現場維修\n'
-        '📹 監視器系統專業安裝規劃\n'
-        '💧 RO 逆滲透淨水器安裝與定期更換濾芯\n\n'
-        '免出門！專人到府服務。需要服務或有任何問題，隨時輸入「找客服」或撥打專線'
-        ' 0988-562-288！'
-    ),
-    (
-        '【建安工作室】電腦卡頓、開不了機嗎？💻\n\n'
-        '不用辛苦搬電腦出門！建安工作室提供「雲嘉南專人到府電腦維修與二手電腦買賣」。\n'
-        '現場檢測、價格透明，舊機換新機更劃算！\n\n'
-        '輸入「找客服」留下您的需求，專人第一時間為您服務！'
-    ),
-    (
-        '【建安工作室】好水好健康！您的 RO 濾芯換了嗎？💧\n\n'
-        '飲用水品質關乎全家健康，濾芯定期保養才安心。\n'
-        '我們提供專業 RO 淨水器安裝、故障排除與到府更換濾芯服務！\n\n'
-        '歡迎輸入「找客服」隨時預約保養，或撥打專線 0988-562-288 諮詢！'
-    ),
-    (
-        '【建安工作室】守護家園與店面安全 📹\n\n'
-        '不論是住家、農舍、工廠還是店面，專業監視器系統讓您出門在外手機隨時遠端看護最安心！\n'
-        '免費現場評估規劃，給您最實惠的方案。\n\n'
-        '有安裝或維修需求，歡迎輸入「找客服」登記，將有專人與您聯繫！'
-    ),
-    (
-        '【建安工作室】早安！今天設備運作還順暢嗎？😊\n\n'
-        '建安工作室是在地的好幫手！不論是「二手電腦買賣/維修」、「監視器裝設」還是「淨水器保養」，通通一電話到府服務！\n\n'
-        '有任何小問題都歡迎線上詢問，輸入「找客服」即可快速登記喔！'
-    ),
-]
 
-last_broadcast_date = ''
-BROADCAST_TARGET_HOUR = 9
-
+# 📱 智慧防吵功能：只有早上 8 點到下午 5 點才會發 LINE 報平安
 
 # ==========================================
-# 📱 每 10 分鐘敲門點：保活給老闆 + 每日廣播給所有好友
-# ==========================================
+
 @app.route('/ping')
+
 def ping():
-  global last_broadcast_date
 
-  tz_tw = timezone(timedelta(hours=8))
-  tw_now = datetime.now(tz_tw)
-  today_str = tw_now.strftime('%Y-%m-%d')
-  current_hour = tw_now.hour
-  current_time_str = tw_now.strftime('%Y-%m-%d %H:%M:%S')
+    current_time_struct = time.localtime()
 
-  configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
+    current_hour = current_time_struct.tm_hour  # 取得目前是幾點 (0-23)
 
-  with ApiClient(configuration) as api_client:
-    line_bot_api = MessagingApi(api_client)
+   
 
-    # 保活推播（限定 8~17 點）
-    if 8 <= current_hour < 17:
-      if ADMIN_LINE_USER_ID:
-        try:
-          keep_alive_msg = (
-              f'[{current_time_str}] 🔔 成功敲門！伺服器回應: OK'
-          )
-          push_request = PushMessageRequest(
-              to=ADMIN_LINE_USER_ID,
-              messages=[TextMessage(text=keep_alive_msg)],
-          )
-          line_bot_api.push_message(push_message_request=push_request)
-          print(f'[{current_time_str}] 保活訊息成功推播至老闆 LINE！')
-        except Exception as e:
-          print(f'[{current_time_str}] 保活訊息推播失敗: {e}')
-      else:
-        print('⚠️ ADMIN_LINE_USER_ID 變數未設定！')
+    current_time_str = time.strftime("%Y-%m-%d %H:%M:%S", current_time_struct)
 
-    # 每日廣播（早上 9 點過後執行）
-    if last_broadcast_date != today_str and current_hour >= BROADCAST_TARGET_HOUR:
-      try:
-        selected_ad = random.choice(DAILY_ADS)
-        broadcast_request = BroadcastRequest(
-            messages=[TextMessage(text=selected_ad)]
-        )
-        line_bot_api.broadcast(broadcast_request=broadcast_request)
+    msg = f"[{current_time_str}] 🔔 成功敲門！伺服器回應: OK"
 
-        last_broadcast_date = today_str
-        print(f'[{current_time_str}] 成功輪播廣播每日廣告給所有好友！')
-      except Exception as e:
-        print(f'[{current_time_str}] 每日廣播發送失敗: {e}')
+   
 
-  return 'OK', 200
+    try:
 
+        # 🎯 關鍵修改：判斷小時是否在 8 點到 17 點之間（下午 5 點是 17 點）
 
-@app.route('/callback', methods=['POST'])
-def callback():
-  signature = request.headers.get('X-Line-Signature', '')
-  body = request.get_data(as_text=True)
+        if 8 <= current_hour < 17:
 
-  try:
-    handler.handle(body, signature)
-  except InvalidSignatureError:
-    abort(400)
+            admin_uid = os.environ.get("ADMIN_LINE_USER_ID")
 
-  return 'OK'
+            if admin_uid:  # 只要 Render 後台有設定這組 ID 就直接發送
 
+                line_bot_api.push_message(admin_uid, TextSendMessage(text=msg))
 
-if __name__ == '__main__':
-  app.run(port=5000)
+    except Exception:
+
+        pass
+
+       
+
+    return 'OK', 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
