@@ -290,7 +290,7 @@
             {% endif %}
         </div>
 
-        <!-- 7. 【新增】修改管理員密碼區塊 -->
+<!-- 7. 【新增】修改管理員密碼區塊 -->
         <div id="password-section" class="card shadow-sm p-4 mb-4">
             <h4 class="text-secondary border-bottom pb-2">🔑 修改管理員密碼</h4>
             <form action="/admin/change_password" method="POST">
@@ -302,12 +302,16 @@
                     <label class="form-label">設定新密碼</label>
                     <input type="password" name="new_password" class="form-control" placeholder="請輸入新密碼" required>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label">再次確認新密碼</label>
+                    <input type="password" name="confirm_password" class="form-control" placeholder="請再次輸入新密碼" required>
+                </div>
                 <button type="submit" class="btn btn-warning">確定更新密碼</button>
             </form>
         </div>
-
     </div>
 </div>
+
 
 <!-- 訂單切換與畫面滾動腳本 -->
 <script>
