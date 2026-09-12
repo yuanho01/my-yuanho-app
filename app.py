@@ -391,36 +391,41 @@ def admin():
 # 新增：管理員修改密碼的路由
 @app.route('/admin/change_password', methods=['POST'])
 def change_password():
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
+    # 1. 檢查管理員是否登入 (同時支援 admin_logged_in 與 logged_in，防止 Session 名稱對不上)
+    if not session.get('admin_logged_in') and not session.get('logged_in'):
+        flash('請先登入管理員帳號！', 'danger')
+        return redirect(url_for('login'))
 
-  old_password = request.form.get('old_password', '').strip()
-  new_password = request.form.get('new_password', '').strip()
-  confirm_password = request.form.get('confirm_password', '').strip()
+    # 2. 取得表單輸入值，並去除前後不小心按到的空白字元
+    old_password = request.form.get('old_password', '').strip()
+    new_password = request.form.get('new_password', '').strip()
+    confirm_password = request.form.get('confirm_password', '').strip()
 
-  data = load_data()
-  current_admin_password = data.get('admin_password', 'admin123')
+    # 3. 讀取 JSON 資料庫
+    data = load_data()
+    current_admin_password = str(data.get('admin_password', 'admin123')).strip()
 
-  # 驗證舊密碼是否正確
-  if old_password != current_admin_password:
-    flash('舊密碼輸入錯誤！', 'danger')
+    # 4. 驗證舊密碼是否正確
+    if old_password != current_admin_password:
+        flash('舊密碼輸入錯誤！', 'danger')
+        return redirect(url_for('admin'))
+
+    # 5. 驗證新密碼不可為空
+    if not new_password:
+        flash('新密碼不能為空！', 'danger')
+        return redirect(url_for('admin'))
+
+    # 6. 驗證二次新密碼是否一致
+    if new_password != confirm_password:
+        flash('兩次輸入的新密碼不一致！', 'danger')
+        return redirect(url_for('admin'))
+
+    # 7. 更新密碼並儲存至 data.json
+    data['admin_password'] = new_password
+    save_data(data)
+
+    flash('管理員密碼已成功修改！下次請使用新密碼登入。', 'success')
     return redirect(url_for('admin'))
-
-  # 驗證新密碼長度與二次確認
-  if not new_password:
-    flash('新密碼不能為空！', 'danger')
-    return redirect(url_for('admin'))
-
-  if new_password != confirm_password:
-    flash('兩次輸入的新密碼不一致！', 'danger')
-    return redirect(url_for('admin'))
-
-  # 更新密碼並儲存
-  data['admin_password'] = new_password
-  save_data(data)
-
-  flash('管理員密碼已成功修改！下次請使用新密碼登入。', 'success')
-  return redirect(url_for('admin'))
 
 
 @app.route('/admin/complete_order/<order_id>', methods=['POST'])
