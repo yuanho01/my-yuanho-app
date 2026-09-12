@@ -64,7 +64,7 @@
         "d0973369969": "Aa014156",
         "": "",
         "Udf5ee6924620bc596fe3a3273adbc5ea": {
-            "step": "idle",
+            "step": "get_name",
             "name": "",
             "phone": "",
             "address": ""
@@ -101,7 +101,7 @@
             "final_total": 22500,
             "is_member_discount": true,
             "time": "2026-09-05 18:42:06",
-            "status": "completed"
+            "status": "processing"
         },
         {
             "order_id": "1788604080",
@@ -121,7 +121,7 @@
             "final_total": 22500,
             "is_member_discount": true,
             "time": "2026-09-05 18:28:00",
-            "status": "completed"
+            "status": "processing"
         },
         {
             "order_id": "1788591258",
