@@ -162,7 +162,6 @@
 
             {% set active_orders = [] %}
             {% for order in orders %}
-                {# 包含舊有的未設定狀態、'active'、'processing' 以及 'shipped' #}
                 {% set status = order.status | default('processing') %}
                 {% if status in ['processing', 'active', 'shipped'] %}
                     {% set _ = active_orders.append(order) %}
@@ -292,7 +291,7 @@
     </div>
 </div>
 
-<!-- 簡單的切換顯示 JavaScript -->
+<!-- 訂單切換與畫面滾動腳本 -->
 <script>
 function switchOrderTab(type) {
     const activeSection = document.getElementById('order-section');
@@ -301,9 +300,11 @@ function switchOrderTab(type) {
     if (type === 'active') {
         activeSection.style.display = 'block';
         historySection.style.display = 'none';
+        activeSection.scrollIntoView({ behavior: 'smooth' });
     } else if (type === 'history') {
         activeSection.style.display = 'none';
         historySection.style.display = 'block';
+        historySection.scrollIntoView({ behavior: 'smooth' });
     }
 }
 </script>
