@@ -101,7 +101,7 @@
             "final_total": 22500,
             "is_member_discount": true,
             "time": "2026-09-05 18:42:06",
-            "status": "processing"
+            "status": "shipped"
         },
         {
             "order_id": "1788604080",
@@ -343,5 +343,6 @@
             "time": "2026-09-04 22:01:14",
             "status": "completed"
         }
-    ]
+    ],
+    "admin_password": "admin123"
 }
