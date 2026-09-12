@@ -64,7 +64,7 @@
         "d0973369969": "Aa014156",
         "": "",
         "Udf5ee6924620bc596fe3a3273adbc5ea": {
-            "step": "idle",
+            "step": "get_name",
             "name": "",
             "phone": "",
             "address": ""
@@ -344,5 +344,5 @@
             "status": "completed"
         }
     ],
-    "admin_password": "562288"
+    "admin_password": "562288Kc"
 }
