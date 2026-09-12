@@ -14,6 +14,8 @@
                 <!-- 透過 onclick 觸發切換顯示函式 -->
                 <a href="#order-section" class="list-group-item list-group-item-action" onclick="switchOrderTab('active')">客戶訂單管理</a>
                 <a href="#history-order-section" class="list-group-item list-group-item-action" onclick="switchOrderTab('history')">歷史訂單紀錄</a>
+                <!-- 【新增】修改密碼選單項目 -->
+                <a href="#password-section" class="list-group-item list-group-item-action text-warning fw-bold">🔑 修改管理員密碼</a>
             </div>
             <hr>
             <a href="/" class="btn btn-outline-secondary btn-sm mb-2" target="_blank">檢視前台首頁</a>
@@ -230,7 +232,7 @@
             {% endif %}
         </div>
 
-        <!-- 6. 已完成的歷史訂單區塊 (會員點擊「我已收到貨」後的已完成訂單) -->
+        <!-- 6. 已完成的歷史訂單區塊 -->
         <div id="history-order-section" class="card shadow-sm p-4 mb-4 order-tab-content" style="display: none;">
             <h4 class="text-secondary border-bottom pb-2">📋 已完成歷史訂單紀錄</h4>
             <p class="text-muted small">在此檢視買家已點擊「我已收到貨」完成交易的歷史訂單：</p>
@@ -286,6 +288,22 @@
             {% else %}
                 <p class="text-muted mb-0">目前尚無歷史訂單紀錄。</p>
             {% endif %}
+        </div>
+
+        <!-- 7. 【新增】修改管理員密碼區塊 -->
+        <div id="password-section" class="card shadow-sm p-4 mb-4">
+            <h4 class="text-secondary border-bottom pb-2">🔑 修改管理員密碼</h4>
+            <form action="/admin/change_password" method="POST">
+                <div class="mb-3">
+                    <label class="form-label">目前舊密碼</label>
+                    <input type="password" name="old_password" class="form-control" placeholder="請輸入目前的管理員密碼" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">設定新密碼</label>
+                    <input type="password" name="new_password" class="form-control" placeholder="請輸入新密碼" required>
+                </div>
+                <button type="submit" class="btn btn-warning">確定更新密碼</button>
+            </form>
         </div>
 
     </div>
