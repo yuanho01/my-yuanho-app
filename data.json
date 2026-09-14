@@ -15,16 +15,7 @@
             "image": "1788522537_562288.png"
         }
     ],
-    "shop_items": [
-        {
-            "id": 1,
-            "title": "電競主機 i7-9700F 32G 雙碟 RTX2060 二手主機 遊戲主機含顯示器鍵盤滑鼠",
-            "description": "",
-            "price": "25000",
-            "link_url": "",
-            "image": "1788523471_image_d1b591c1.jpg"
-        }
-    ],
+    "shop_items": [],
     "services": [
         {
             "id": 4,
@@ -101,7 +92,7 @@
             "final_total": 22500,
             "is_member_discount": true,
             "time": "2026-09-05 18:42:06",
-            "status": "completed"
+            "status": "shipped"
         },
         {
             "order_id": "1788604080",
@@ -121,7 +112,7 @@
             "final_total": 22500,
             "is_member_discount": true,
             "time": "2026-09-05 18:28:00",
-            "status": "completed"
+            "status": "shipped"
         },
         {
             "order_id": "1788591258",
